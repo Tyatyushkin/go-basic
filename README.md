@@ -16,7 +16,7 @@ func main() {
 }
 ````
 3. Сделан коммит по в ветку **dev**
-4. Создан PR в ветку **main**
+4. Создан PR в ветку **main** - https://github.com/Tyatyushkin/go-basic/pull/1
 5. Обновлена локальная базовая ветка с помощью 
 ````
 git pull
