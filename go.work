@@ -4,4 +4,5 @@ use (
 	./homework01
 	./homework02
 	./homework03
+	./mpm
 )
