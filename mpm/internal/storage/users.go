@@ -13,7 +13,7 @@ const usersDirectory = "/opt/mpm/data/users.json"
 
 type JSONUserStorage struct{}
 
-func NewUserStorage(directory string) *JSONUserStorage {
+func NewUserStorage() *JSONUserStorage {
 	ensureDataDir()
 	ensureDefaultUser()
 	return &JSONUserStorage{}
