@@ -37,6 +37,7 @@ func (s *JSONUserStorage) LoadUsers() ([]models.User, error) {
 	return users, nil
 }
 
+// SaveUsers сохраняет список пользователей в JSON
 func (s *JSONUserStorage) SaveUsers(users []models.User) error {
 	data, err := json.MarshalIndent(users, "", "  ")
 	if err != nil {
