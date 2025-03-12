@@ -2,98 +2,103 @@ package storage
 
 import (
 	"encoding/json"
-	"errors"
+	"log"
 	"mpm/internal/models"
 	"os"
 	"path/filepath"
 	"time"
 )
 
-const usersDirectory = "/opt/mpm/data/users.json"
+// Сделаем путь настраиваемым через переменную окружения
+var usersDirectory = getDataPath()
+
+func getDataPath() string {
+	path := os.Getenv("MPM_DATA_PATH")
+	if path == "" {
+		path = "/opt/mpm/data/users.json"
+	}
+	return path
+}
 
 type JSONUserStorage struct{}
 
 func NewUserStorage() *JSONUserStorage {
-	ensureDataDir()
-	ensureDefaultUser()
+	if err := ensureDataDir(); err != nil {
+		log.Printf("Ошибка при создании директории данных: %v", err)
+	}
+
+	if err := ensureDefaultUser(); err != nil {
+		log.Printf("Ошибка при создании пользователя по умолчанию: %v", err)
+	}
+
 	return &JSONUserStorage{}
 }
 
 // LoadUsers загружает список пользователей из JSON
 func (s *JSONUserStorage) LoadUsers() ([]models.User, error) {
+	// Проверяем наличие файла перед чтением
+	if _, err := os.Stat(usersDirectory); os.IsNotExist(err) {
+		log.Printf("Файл пользователей не существует, возвращаем пустой список")
+		return []models.User{}, nil
+	}
+
 	data, err := os.ReadFile(usersDirectory)
 	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			return []models.User{}, nil
-		}
-		return nil, err
+		log.Printf("Ошибка при чтении файла пользователей: %v", err)
+		return []models.User{}, nil // Возвращаем пустой список вместо ошибки
+	}
+
+	// Проверка на пустой файл
+	if len(data) == 0 {
+		return []models.User{}, nil
 	}
 
 	var users []models.User
 	if err := json.Unmarshal(data, &users); err != nil {
-		return nil, err
+		log.Printf("Ошибка при анализе JSON: %v", err)
+		return []models.User{}, nil
 	}
 
 	return users, nil
 }
 
-// SaveUsers сохраняет список пользователей в JSON
+// SaveUsers сохраняет список пользователей в JSON файл
 func (s *JSONUserStorage) SaveUsers(users []models.User) error {
 	data, err := json.MarshalIndent(users, "", "  ")
 	if err != nil {
-		return err
-	}
-	return os.WriteFile(usersDirectory, data, 0644)
-}
-
-// AddUser добавляет нового пользователя в JSON-хранилище
-func (s *JSONUserStorage) AddUser(user models.User) error {
-	users, err := s.LoadUsers()
-	if err != nil {
+		log.Printf("Ошибка при сериализации пользователей: %v", err)
 		return err
 	}
 
-	users = append(users, user)
-	return s.SaveUsers(users)
+	if err := os.WriteFile(usersDirectory, data, 0644); err != nil {
+		log.Printf("Ошибка при записи файла пользователей: %v", err)
+		return err
+	}
+
+	return nil
 }
 
-func ensureDataDir() {
+func ensureDataDir() error {
 	dir := filepath.Dir(usersDirectory)
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
-		os.MkdirAll(dir, 0755)
+		log.Printf("Создание директории: %s", dir)
+		return os.MkdirAll(dir, 0755)
 	}
+	return nil
 }
 
-// GetUserByUsername ищет пользователя по имени
-func (s *JSONUserStorage) GetUserByUsername(username string) (*models.User, error) {
-	users, err := s.LoadUsers()
-	if err != nil {
-		return nil, err
-	}
+func ensureDefaultUser() error {
+	storage := &JSONUserStorage{}
+	users, _ := storage.LoadUsers()
 
-	for _, user := range users {
-		if user.Username == username {
-			return &user, nil
-		}
-	}
-
-	return nil, errors.New("пользователь не найден")
-}
-
-func ensureDefaultUser() {
-	users, err := (&JSONUserStorage{}).LoadUsers()
-	if err != nil {
-		return
-	}
-
-	// Проверяем, есть ли пользователь masterplan
+	// Проверка на наличие пользователя masterplan
 	for _, user := range users {
 		if user.Username == "masterplan" {
-			return
+			return nil
 		}
 	}
 
-	// Создаём пользователя masterplan
+	// Создание пользователя по умолчанию
 	defaultUser := models.User{
 		ID:        1,
 		Username:  "masterplan",
@@ -103,5 +108,5 @@ func ensureDefaultUser() {
 	}
 
 	users = append(users, defaultUser)
-	(&JSONUserStorage{}).SaveUsers(users)
+	return storage.SaveUsers(users)
 }
