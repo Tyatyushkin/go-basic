@@ -5,8 +5,8 @@ import (
 	"mime/multipart"
 )
 
-// StorageProvider определяет общий интерфейс для работы с разными хранилищами файлов
-type StorageProvider interface {
+// Provider определяет общий интерфейс для работы с разными хранилищами файлов
+type Provider interface {
 	// Save сохраняет файл в хранилище и возвращает путь для доступа к нему
 	Save(file multipart.File, filename string) (string, error)
 
