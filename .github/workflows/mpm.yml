@@ -25,18 +25,13 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
       - name: Build and Push Docker image
         uses: docker/build-push-action@v4
         with:
           context: ./mpm
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: |
-            ghcr.io/tyatyushkin/mpm:v0.0.1
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          push: true
+          tags: ghcr.io/tyatyushkin/mpm:latest
+
 
 
 #  deploy:
