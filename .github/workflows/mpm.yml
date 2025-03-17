@@ -48,10 +48,30 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          passphrase: ${{ secrets.SSH_PASSPHRASE }}
           script: |
-            cd /path/to/deployment
-            docker pull ghcr.io/${{ github.repository_owner }}/mpm:latest
-            docker-compose down
-            echo "DOCKER_IMAGE=ghcr.io/${{ github.repository_owner }}/mpm:latest" > .env
+            DEPLOY_DIR="/opt/mpm"
+            mkdir -p $DEPLOY_DIR
+            cd $DEPLOY_DIR
+
+      - name: Copy docker-compose.yml to server
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          passphrase: ${{ secrets.SSH_PASSPHRASE }}
+          source: "mpm/docker-compose.yml"
+          target: "/opt/mpm"
+          strip_components: 1
+
+      - name: Restart services
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /opt/mpm
+            docker pull ghcr.io/tyatyushkin/mpm:latest
+            docker-compose down || true
             docker-compose up -d
