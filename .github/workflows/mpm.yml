@@ -35,7 +35,6 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: |
             ghcr.io/tyatyushkin/mpm:v0.0.1
-            ghcr.io/tyatyushkin/mpm:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
