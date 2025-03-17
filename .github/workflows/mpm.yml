@@ -39,6 +39,9 @@ jobs:
     needs: build
     if: github.actor == 'Tyatyushkin'
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
       - name: Deploy to server
         uses: appleboy/ssh-action@v1.0.0
         with:

@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   mpm:
-    image: ghcr.io/tyatyushkin/mpm:v0.0.1
+    image: ghcr.io/tyatyushkin/mpm:latest
     container_name: mpm
     volumes:
       - mpm-data:/opt/mpm/data
