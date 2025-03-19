@@ -13,3 +13,11 @@ type Photo struct {
 	StorageType string     `json:"storage_type" db:"storage_type"` // Тип хранения фотографии (local, google, dropbox)
 	CreatedAt   time.Time  `json:"created_at" db:"created_at"`
 }
+
+func (p Photo) GetID() int {
+	return p.ID
+}
+
+func (p Photo) GetName() string {
+	return p.Name
+}
