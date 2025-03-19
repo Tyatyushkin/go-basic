@@ -18,6 +18,6 @@ func (p Photo) GetID() int {
 	return p.ID
 }
 
-func (p Photo) GetName() string {
-	return p.Name
+func (p Photo) GetType() string {
+	return "photo"
 }
