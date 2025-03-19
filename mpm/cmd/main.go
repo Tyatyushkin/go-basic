@@ -21,6 +21,18 @@ func main() {
 	if err != nil {
 		log.Fatalf("Ошибка при генерации и сохранении сущностей: %v", err)
 	}
+	go func() {
+		ticker := time.NewTicker(30 * time.Second)
+		defer ticker.Stop()
+
+		for range ticker.C {
+			log.Println("Запланированная генерация статических сущностей")
+			err := service.GenerateAndSaveEntities()
+			if err != nil {
+				log.Printf("Ошибка при генерации и сохранении сущностей: %v", err)
+			}
+		}
+	}()
 
 	// Создание маршрутизатора
 	mux := http.NewServeMux()
@@ -40,16 +52,4 @@ func main() {
 		log.Fatalf("Ошибка запуска сервера: %v", err)
 	}
 
-	ticker := time.NewTicker(30 * time.Second)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-ticker.C:
-			err := service.GenerateAndSaveEntities()
-			if err != nil {
-				log.Printf("Ошибка при генерации и сохранении сущностей: %v", err)
-			}
-		}
-	}
 }
