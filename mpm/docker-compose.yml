@@ -2,10 +2,8 @@ version: '3.8'
 
 services:
   mpm:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: mpm-app
+    image: ghcr.io/tyatyushkin/mpm:latest
+    container_name: mpm
     volumes:
       - mpm-data:/opt/mpm/data
     ports:
