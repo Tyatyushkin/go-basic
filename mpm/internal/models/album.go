@@ -10,3 +10,11 @@ type Album struct {
 	Tags      []string  `json:"tags,omitempty" db:"tags"`     // Теги альбома
 	CreatedAt time.Time `json:"created_at" db:"created_at"`   // Дата создания альбома
 }
+
+func (a Album) GetID() int {
+	return a.ID
+}
+
+func (a Album) GetType() string {
+	return "album"
+}
