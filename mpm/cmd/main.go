@@ -3,8 +3,10 @@ package main
 import (
 	"log"
 	"mpm/internal/handlers"
+	"mpm/internal/service"
 	"mpm/internal/storage"
 	"net/http"
+	"time"
 )
 
 func main() {
@@ -13,6 +15,24 @@ func main() {
 
 	// Создание обработчика для пользователей
 	userHandler := handlers.NewUserHandler(userStorage)
+
+	// Вызываем функцию генерации и сохранения сущностей сразу
+	err := service.GenerateAndSaveEntities()
+	if err != nil {
+		log.Fatalf("Ошибка при генерации и сохранении сущностей: %v", err)
+	}
+	go func() {
+		ticker := time.NewTicker(30 * time.Second)
+		defer ticker.Stop()
+
+		for range ticker.C {
+			log.Println("Запланированная генерация статических сущностей")
+			err := service.GenerateAndSaveEntities()
+			if err != nil {
+				log.Printf("Ошибка при генерации и сохранении сущностей: %v", err)
+			}
+		}
+	}()
 
 	// Создание маршрутизатора
 	mux := http.NewServeMux()
@@ -31,4 +51,5 @@ func main() {
 	if err := server.ListenAndServe(); err != nil {
 		log.Fatalf("Ошибка запуска сервера: %v", err)
 	}
+
 }

@@ -12,7 +12,7 @@ COPY . .
 
 # Build the application
 # Adjust the path to your main.go file if needed
-RUN CGO_ENABLED=0 GOOS=linux go build -o mpm ./cmd/mpm/main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -o mpm ./cmd/main.go
 
 # Final stage
 FROM alpine:latest
