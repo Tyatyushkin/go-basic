@@ -41,28 +41,16 @@ func SaveEntities(entities []models.Entity) error {
 	for _, entity := range entities {
 		// Проверяем тип сущности с помощью type assertion
 		switch e := entity.(type) {
-		case models.Photo:
-			photos = append(photos, e)
-			fmt.Printf("Сохранена фотография: ID=%d, Title=%s\n", e.ID, e.Name)
-
-		case *models.Photo:
-			photos = append(photos, *e)
-			fmt.Printf("Сохранена фотография: ID=%d, Title=%s\n", e.ID, e.Name)
+		//case models.Photo:
+		//	photos = append(photos, e)
+		//	fmt.Printf("Сохранена фотография: ID=%d, Title=%s\n", e.ID, e.Name)
 
 		case models.Album:
 			albums = append(albums, e)
 			fmt.Printf("Сохранен альбом: ID=%d, Title=%s\n", e.ID, e.Name)
 
-		case *models.Album:
-			albums = append(albums, *e)
-			fmt.Printf("Сохранен альбом: ID=%d, Title=%s\n", e.ID, e.Name)
-
 		case models.Tag:
 			tags = append(tags, e)
-			fmt.Printf("Сохранен тег: ID=%d, Name=%s\n", e.ID, e.Name)
-
-		case *models.Tag:
-			tags = append(tags, *e)
 			fmt.Printf("Сохранен тег: ID=%d, Name=%s\n", e.ID, e.Name)
 
 		default:

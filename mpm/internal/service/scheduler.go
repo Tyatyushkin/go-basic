@@ -168,15 +168,15 @@ func saveEntities(entityChannel <-chan EntityJob, wg *sync.WaitGroup, workerID i
 		switch job.Type {
 		case "photo":
 			photos = append(photos, job.Entity)
-			fmt.Printf("Работник %d: получена фотография ID=%d\n", workerID, job.Entity.GetID())
+			fmt.Printf("Worker %d: получена фотография ID=%d\n", workerID, job.Entity.GetID())
 		case "album":
 			albums = append(albums, job.Entity)
-			fmt.Printf("Работник %d: получен альбом ID=%d\n", workerID, job.Entity.GetID())
+			fmt.Printf("Worker %d: получен альбом ID=%d\n", workerID, job.Entity.GetID())
 		case "tag":
 			tags = append(tags, job.Entity)
-			fmt.Printf("Работник %d: получен тег ID=%d\n", workerID, job.Entity.GetID())
+			fmt.Printf("Worker %d: получен тег ID=%d\n", workerID, job.Entity.GetID())
 		default:
-			fmt.Printf("Работник %d: неизвестный тип сущности: %s\n", workerID, job.Type)
+			fmt.Printf("Worker %d: неизвестный тип сущности: %s\n", workerID, job.Type)
 		}
 	}
 
@@ -190,7 +190,7 @@ func saveEntities(entityChannel <-chan EntityJob, wg *sync.WaitGroup, workerID i
 			return
 		}
 		mutex.Unlock()
-		fmt.Printf("Работник %d: сохранено %d фотографий\n", workerID, len(photos))
+		fmt.Printf("Worкer %d: сохранено %d фотографий\n", workerID, len(photos))
 	}
 
 	if len(albums) > 0 {
@@ -200,7 +200,7 @@ func saveEntities(entityChannel <-chan EntityJob, wg *sync.WaitGroup, workerID i
 			return
 		}
 		mutex.Unlock()
-		fmt.Printf("Работник %d: сохранено %d альбомов\n", workerID, len(albums))
+		fmt.Printf("Worker %d: сохранено %d альбомов\n", workerID, len(albums))
 	}
 
 	if len(tags) > 0 {
@@ -210,6 +210,6 @@ func saveEntities(entityChannel <-chan EntityJob, wg *sync.WaitGroup, workerID i
 			return
 		}
 		mutex.Unlock()
-		fmt.Printf("Работник %d: сохранено %d тегов\n", workerID, len(tags))
+		fmt.Printf("Worker %d: сохранено %d тегов\n", workerID, len(tags))
 	}
 }
