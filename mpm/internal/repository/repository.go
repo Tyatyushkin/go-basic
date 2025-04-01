@@ -3,17 +3,22 @@ package repository
 import (
 	"fmt"
 	"mpm/internal/models"
+	"sync"
 )
 
-// хранилище для всех типов сущностей
+// Хранилище для всех типов сущностей
 var (
 	photos []models.Photo
 	albums []models.Album
 	tags   []models.Tag
+	mutex  sync.RWMutex // Используется для синхронизации доступа к слайсам
 )
 
 // Initialize инициализирует слайсы, если это необходимо
 func Initialize() {
+	mutex.Lock()
+	defer mutex.Unlock()
+
 	if photos == nil {
 		photos = make([]models.Photo, 0)
 	}
@@ -30,6 +35,9 @@ func Initialize() {
 // SaveEntities функция, которая принимает слайс интерфейсов Entity,
 // проверяет реальный тип каждой сущности и добавляет ее в соответствующий слайс
 func SaveEntities(entities []models.Entity) error {
+	mutex.Lock()
+	defer mutex.Unlock()
+
 	for _, entity := range entities {
 		// Проверяем тип сущности с помощью type assertion
 		switch e := entity.(type) {
@@ -67,15 +75,29 @@ func SaveEntities(entities []models.Entity) error {
 
 // GetPhotos возвращает все фотографии
 func GetPhotos() []models.Photo {
-	return photos
+	mutex.RLock()
+	defer mutex.RUnlock()
+
+	result := make([]models.Photo, len(photos))
+	copy(result, photos)
+	return result
 }
 
 // GetAlbums возвращает все альбомы
 func GetAlbums() []models.Album {
-	return albums
+	mutex.RLock()
+	defer mutex.RUnlock()
+
+	result := make([]models.Album, len(albums))
+	return result
 }
 
 // GetTags возвращает все теги
 func GetTags() []models.Tag {
-	return tags
+	mutex.RLock()
+	defer mutex.RUnlock()
+
+	result := make([]models.Tag, len(tags))
+	copy(result, tags)
+	return result
 }
