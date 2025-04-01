@@ -120,24 +120,3 @@ func GetNewEntities(photoStartIndex, albumStartIndex, tagStartIndex int) (newPho
 
 	return
 }
-
-// AddPhoto добавляет фотографию в хранилище
-func AddPhoto(photo models.Photo) {
-	mutex.Lock()
-	defer mutex.Unlock()
-	photos = append(photos, photo)
-}
-
-// AddAlbum добавляет альбом в хранилище
-func AddAlbum(album models.Album) {
-	mutex.Lock()
-	defer mutex.Unlock()
-	albums = append(albums, album)
-}
-
-// AddTag добавляет тег в хранилище
-func AddTag(tag models.Tag) {
-	mutex.Lock()
-	defer mutex.Unlock()
-	tags = append(tags, tag)
-}
