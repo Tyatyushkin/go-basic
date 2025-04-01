@@ -101,3 +101,55 @@ func GetTags() []models.Tag {
 	copy(result, tags)
 	return result
 }
+
+// GetEntitiesCounts возвращает количество сущностей каждого типа
+func GetEntitiesCounts() (photoCount, albumCount, tagCount int) {
+	mutex.RLock()
+	defer mutex.RUnlock()
+
+	return len(photos), len(albums), len(tags)
+}
+
+// GetNewEntities возвращает новые сущности, начиная с определенных индексов
+func GetNewEntities(photoStartIndex, albumStartIndex, tagStartIndex int) (newPhotos []models.Photo, newAlbums []models.Album, newTags []models.Tag) {
+	mutex.RLock()
+	defer mutex.RUnlock()
+
+	if photoStartIndex < len(photos) {
+		newPhotos = make([]models.Photo, len(photos)-photoStartIndex)
+		copy(newPhotos, photos[photoStartIndex:])
+	}
+
+	if albumStartIndex < len(albums) {
+		newAlbums = make([]models.Album, len(albums)-albumStartIndex)
+		copy(newAlbums, albums[albumStartIndex:])
+	}
+
+	if tagStartIndex < len(tags) {
+		newTags = make([]models.Tag, len(tags)-tagStartIndex)
+		copy(newTags, tags[tagStartIndex:])
+	}
+
+	return
+}
+
+// AddPhoto добавляет фотографию в хранилище
+func AddPhoto(photo models.Photo) {
+	mutex.Lock()
+	defer mutex.Unlock()
+	photos = append(photos, photo)
+}
+
+// AddAlbum добавляет альбом в хранилище
+func AddAlbum(album models.Album) {
+	mutex.Lock()
+	defer mutex.Unlock()
+	albums = append(albums, album)
+}
+
+// AddTag добавляет тег в хранилище
+func AddTag(tag models.Tag) {
+	mutex.Lock()
+	defer mutex.Unlock()
+	tags = append(tags, tag)
+}

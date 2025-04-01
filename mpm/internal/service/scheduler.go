@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	"log"
 	"mpm/internal/models"
 	"mpm/internal/repository"
 	"sync"
@@ -43,6 +44,67 @@ func GenerateAndSaveEntities() error {
 	fmt.Printf("Всего тегов: %d\n", len(repository.GetTags()))
 
 	return nil
+}
+
+// Переменная для отслеживания, запущен ли мониторинг
+var monitoringStarted sync.Once
+
+// startEntityMonitoring запускает горутину мониторинга сущностей
+func startEntityMonitoring() {
+	// Используем sync.Once для гарантии, что мониторинг запускается только один раз
+	monitoringStarted.Do(func() {
+		go monitorEntities()
+	})
+}
+
+// monitorEntities следит за изменениями в слайсах и логирует новые сущности
+func monitorEntities() {
+	log.Println("Запуск мониторинга сущностей")
+
+	// Начальное количество элементов в каждом слайсе
+	lastPhotoCount, lastAlbumCount, lastTagCount := repository.GetEntitiesCounts()
+
+	// Создаем тикер для периодической проверки
+	ticker := time.NewTicker(200 * time.Millisecond)
+	defer ticker.Stop()
+
+	for range ticker.C {
+		// Получаем текущее количество элементов
+		currentPhotoCount, currentAlbumCount, currentTagCount := repository.GetEntitiesCounts()
+
+		// Проверяем, были ли добавлены новые элементы
+		if currentPhotoCount > lastPhotoCount ||
+			currentAlbumCount > lastAlbumCount ||
+			currentTagCount > lastTagCount {
+
+			// Получаем новые элементы
+			newPhotos, newAlbums, newTags := repository.GetNewEntities(
+				lastPhotoCount, lastAlbumCount, lastTagCount)
+
+			// Логируем новые фотографии
+			for _, photo := range newPhotos {
+				log.Printf("МОНИТОР: Обнаружена новая фотография - ID: %d, Название: %s",
+					photo.ID, photo.Name)
+			}
+
+			// Логируем новые альбомы
+			for _, album := range newAlbums {
+				log.Printf("МОНИТОР: Обнаружен новый альбом - ID: %d, Название: %s",
+					album.ID, album.Name)
+			}
+
+			// Логируем новые теги
+			for _, tag := range newTags {
+				log.Printf("МОНИТОР: Обнаружен новый тег - ID: %d, Название: %s",
+					tag.ID, tag.Name)
+			}
+
+			// Обновляем счетчики
+			lastPhotoCount = currentPhotoCount
+			lastAlbumCount = currentAlbumCount
+			lastTagCount = currentTagCount
+		}
+	}
 }
 
 // generateEntities генерирует различные сущности и отправляет их в канал
