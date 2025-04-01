@@ -27,6 +27,16 @@ func GenerateAndSaveEntities() error {
 	wg.Add(1)
 	go generateEntities(entityChannel, &wg)
 
+	// Запускаем несколько горутин для сохранения сущностей
+	const numWorkers = 3
+	wg.Add(numWorkers)
+	for i := 0; i < numWorkers; i++ {
+		go saveEntities(entityChannel, &wg, i)
+	}
+
+	// Ожидаем завершения всех горутин
+	wg.Wait()
+
 	// Создаем слайс разных сущностей
 	entities := []models.Entity{
 		//Добавляем альбом по умолчанию
@@ -94,5 +104,10 @@ func generateEntities(entityChannel chan<- EntityJob, wg *sync.WaitGroup) {
 	}
 
 	fmt.Println("Генерация сущностей завершена")
+
+}
+
+// saveEntities получает сущности из канала и сохраняет их
+func saveEntities(entityChannel <-chan EntityJob, wg *sync.WaitGroup, workerID int) {
 
 }
