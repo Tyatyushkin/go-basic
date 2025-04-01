@@ -37,21 +37,6 @@ func GenerateAndSaveEntities() error {
 	// Ожидаем завершения всех горутин
 	wg.Wait()
 
-	// Создаем слайс разных сущностей
-	entities := []models.Entity{
-		//Добавляем альбом по умолчанию
-		defaultAlbum,
-	}
-
-	// Добавляем базовые теги в общий слайс сущностей
-	entities = append(entities, basicTags...)
-
-	// Передаем сущности в функцию репозитория
-	err := repository.SaveEntities(entities)
-	if err != nil {
-		return fmt.Errorf("ошибка при сохранении сущностей: %v", err)
-	}
-
 	// Для демонстрации выводим количество сущностей в каждом слайсе
 	fmt.Printf("Всего фотографий: %d\n", len(repository.GetPhotos()))
 	fmt.Printf("Всего альбомов: %d\n", len(repository.GetAlbums()))
@@ -109,5 +94,60 @@ func generateEntities(entityChannel chan<- EntityJob, wg *sync.WaitGroup) {
 
 // saveEntities получает сущности из канала и сохраняет их
 func saveEntities(entityChannel <-chan EntityJob, wg *sync.WaitGroup, workerID int) {
+	defer wg.Done()
 
+	// Создаем отдельные слайсы для каждого типа сущностей
+	var photos []models.Entity
+	var albums []models.Entity
+	var tags []models.Entity
+
+	// Обрабатываем сущности из канала
+	for job := range entityChannel {
+		switch job.Type {
+		case "photo":
+			photos = append(photos, job.Entity)
+			fmt.Printf("Работник %d: получена фотография ID=%d\n", workerID, job.Entity.GetID())
+		case "album":
+			albums = append(albums, job.Entity)
+			fmt.Printf("Работник %d: получен альбом ID=%d\n", workerID, job.Entity.GetID())
+		case "tag":
+			tags = append(tags, job.Entity)
+			fmt.Printf("Работник %d: получен тег ID=%d\n", workerID, job.Entity.GetID())
+		default:
+			fmt.Printf("Работник %d: неизвестный тип сущности: %s\n", workerID, job.Type)
+		}
+	}
+
+	// Сохраняем каждый тип сущностей пакетно
+	mutex := &sync.Mutex{}
+
+	if len(photos) > 0 {
+		mutex.Lock()
+		err := repository.SaveEntities(photos)
+		if err != nil {
+			return
+		}
+		mutex.Unlock()
+		fmt.Printf("Работник %d: сохранено %d фотографий\n", workerID, len(photos))
+	}
+
+	if len(albums) > 0 {
+		mutex.Lock()
+		err := repository.SaveEntities(albums)
+		if err != nil {
+			return
+		}
+		mutex.Unlock()
+		fmt.Printf("Работник %d: сохранено %d альбомов\n", workerID, len(albums))
+	}
+
+	if len(tags) > 0 {
+		mutex.Lock()
+		err := repository.SaveEntities(tags)
+		if err != nil {
+			return
+		}
+		mutex.Unlock()
+		fmt.Printf("Работник %d: сохранено %d тегов\n", workerID, len(tags))
+	}
 }
