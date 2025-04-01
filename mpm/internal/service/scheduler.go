@@ -35,6 +35,9 @@ func GenerateAndSaveEntities() error {
 		go saveEntities(entityChannel, &wg, i)
 	}
 
+	// Запускаем горутину для мониторинга изменений в слайсах (только если еще не запущена)
+	startEntityMonitoring()
+
 	// Ожидаем завершения всех горутин
 	wg.Wait()
 
