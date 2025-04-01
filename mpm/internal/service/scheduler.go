@@ -7,6 +7,12 @@ import (
 	"time"
 )
 
+// EntityJob структура для передачи сущности и ее типа в горутину
+type EntityJob struct {
+	Entity models.Entity
+	Type   string // тип сущности для определения куда сохранять
+}
+
 // GenerateAndSaveEntities функция, которая создает разные структуры
 // из internal/model и передает их в функцию слоя internal/repository
 func GenerateAndSaveEntities() error {
