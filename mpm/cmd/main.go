@@ -1,15 +1,34 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"log"
 	"mpm/internal/handlers"
 	"mpm/internal/service"
 	"mpm/internal/storage"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 )
 
 func main() {
+	// Создаем контекст
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Канал для получения сигналов от ОС
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+
+	go func() {
+		sig := <-sigChan
+		log.Printf("Получен сигнал: %v, начинаем graceful shutdown", sig)
+		cancel() // Отменяем контекст для корректного завершения всех горутин
+	}()
+
 	// Инициализация хранилища пользователей
 	userStorage := storage.NewUserStorage()
 
@@ -46,10 +65,29 @@ func main() {
 		Handler: mux,
 	}
 
-	// Запуск сервера
-	log.Println("Запуск сервера на порту 8484...")
-	if err := server.ListenAndServe(); err != nil {
+	// Запуск сервера в отдельной горутине
+	serverError := make(chan error, 1)
+	go func() {
+		log.Println("Запуск сервера на порту 8484...")
+		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			serverError <- err
+		}
+	}()
+
+	select {
+	case err := <-serverError:
 		log.Fatalf("Ошибка запуска сервера: %v", err)
+	case <-ctx.Done():
+		// Получен сигнал для завершения работы
+		log.Println("Начинаем graceful shutdown HTTP сервера...")
+		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer shutdownCancel()
+
+		if err := server.Shutdown(shutdownCtx); err != nil {
+			log.Fatalf("Ошибка при graceful shutdown сервера: %v", err)
+		}
+
+		log.Println("HTTP сервер остановлен")
 	}
 
 }
