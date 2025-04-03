@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log"
 	"mpm/internal/handlers"
+	"mpm/internal/repository"
 	"mpm/internal/service"
 	"mpm/internal/storage"
 	"net/http"
@@ -50,7 +51,7 @@ func main() {
 
 		for range ticker.C {
 			log.Println("Запланированная генерация статических сущностей")
-			err := service.GenerateAndSaveEntities()
+			err := entityService.GenerateAndSaveEntities()
 			if err != nil {
 				log.Printf("Ошибка при генерации и сохранении сущностей: %v", err)
 			}
