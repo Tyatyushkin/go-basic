@@ -190,3 +190,81 @@ func (s *AlbumStore) Count() int {
 
 	return len(s.items)
 }
+
+// NewTagStore создает новое хранилище тегов
+func NewTagStore() *TagStore {
+	return &TagStore{
+		items: make([]models.Tag, 0),
+	}
+}
+
+// Add добавляет тег в хранилище
+func (s *TagStore) Add(tag models.Tag) error {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	s.items = append(s.items, tag)
+	fmt.Printf("Сохранен тег: ID=%d, Name=%s\n", tag.ID, tag.Name)
+	return nil
+}
+
+// AddEntity реализует интерфейс EntityStore
+func (s *TagStore) AddEntity(entity models.Entity) error {
+	if tag, ok := entity.(models.Tag); ok {
+		return s.Add(tag)
+	}
+	return fmt.Errorf("неверный тип сущности для TagStore: %T", entity)
+}
+
+// GetAll возвращает копию всех тегов
+func (s *TagStore) GetAll() []models.Tag {
+	s.mutex.RLock()
+	defer s.mutex.RUnlock()
+
+	result := make([]models.Tag, len(s.items))
+	copy(result, s.items)
+	return result
+}
+
+// GetAllEntities реализует интерфейс EntityStore
+func (s *TagStore) GetAllEntities() []models.Entity {
+	tags := s.GetAll()
+	entities := make([]models.Entity, len(tags))
+	for i, tag := range tags {
+		entities[i] = tag
+	}
+	return entities
+}
+
+// GetNew возвращает новые теги с момента последнего вызова
+func (s *TagStore) GetNew() []models.Tag {
+	s.mutex.RLock()
+	defer s.mutex.RUnlock()
+
+	if s.lastIndex >= len(s.items) {
+		return []models.Tag{}
+	}
+
+	result := make([]models.Tag, len(s.items)-s.lastIndex)
+	copy(result, s.items[s.lastIndex:])
+	s.lastIndex = len(s.items)
+	return result
+}
+
+// GetNewEntities реализует интерфейс EntityStore
+func (s *TagStore) GetNewEntities() []models.Entity {
+	tags := s.GetNew()
+	entities := make([]models.Entity, len(tags))
+	for i, tag := range tags {
+		entities[i] = tag
+	}
+	return entities
+}
+
+// Count возвращает количество тегов
+func (s *TagStore) Count() int {
+	s.mutex.RLock()
+	defer s.mutex.RUnlock()
+
+	return len(s.items)
+}
