@@ -5,57 +5,56 @@ import (
 	"mpm/internal/models"
 )
 
-// хранилище для всех типов сущностей
-var (
-	photos []models.Photo
-	albums []models.Album
-	tags   []models.Tag
-)
+// Repository объединяет все хранилища сущностей
+type Repository struct {
+	photoStore *PhotoStore
+	albumStore *AlbumStore
+	tagStore   *TagStore
+}
 
-// Initialize инициализирует слайсы, если это необходимо
-func Initialize() {
-	if photos == nil {
-		photos = make([]models.Photo, 0)
-	}
-
-	if albums == nil {
-		albums = make([]models.Album, 0)
-	}
-
-	if tags == nil {
-		tags = make([]models.Tag, 0)
+// NewRepository создаёт новый экземпляр репозитория
+func NewRepository() *Repository {
+	return &Repository{
+		photoStore: NewPhotoStore(),
+		albumStore: NewAlbumStore(),
+		tagStore:   NewTagStore(),
 	}
 }
 
-// SaveEntities функция, которая принимает слайс интерфейсов Entity,
-// проверяет реальный тип каждой сущности и добавляет ее в соответствующий слайс
-func SaveEntities(entities []models.Entity) error {
+// Photos возвращает хранилище фотографий
+func (r *Repository) Photos() *PhotoStore {
+	return r.photoStore
+}
+
+// Albums возвращает хранилище альбомов
+func (r *Repository) Albums() *AlbumStore {
+	return r.albumStore
+}
+
+// Tags возвращает хранилище тегов
+func (r *Repository) Tags() *TagStore {
+	return r.tagStore
+}
+
+// SaveEntities функция, которая распределяет сущности по соответствующим хранилищам
+func (r *Repository) SaveEntities(entities []models.Entity) error {
 	for _, entity := range entities {
 		// Проверяем тип сущности с помощью type assertion
 		switch e := entity.(type) {
 		case models.Photo:
-			photos = append(photos, e)
-			fmt.Printf("Сохранена фотография: ID=%d, Title=%s\n", e.ID, e.Name)
-
-		case *models.Photo:
-			photos = append(photos, *e)
-			fmt.Printf("Сохранена фотография: ID=%d, Title=%s\n", e.ID, e.Name)
+			if err := r.photoStore.Add(e); err != nil {
+				return err
+			}
 
 		case models.Album:
-			albums = append(albums, e)
-			fmt.Printf("Сохранен альбом: ID=%d, Title=%s\n", e.ID, e.Name)
-
-		case *models.Album:
-			albums = append(albums, *e)
-			fmt.Printf("Сохранен альбом: ID=%d, Title=%s\n", e.ID, e.Name)
+			if err := r.albumStore.Add(e); err != nil {
+				return err
+			}
 
 		case models.Tag:
-			tags = append(tags, e)
-			fmt.Printf("Сохранен тег: ID=%d, Name=%s\n", e.ID, e.Name)
-
-		case *models.Tag:
-			tags = append(tags, *e)
-			fmt.Printf("Сохранен тег: ID=%d, Name=%s\n", e.ID, e.Name)
+			if err := r.tagStore.Add(e); err != nil {
+				return err
+			}
 
 		default:
 			return fmt.Errorf("неизвестный тип сущности: %T", entity)
@@ -65,17 +64,12 @@ func SaveEntities(entities []models.Entity) error {
 	return nil
 }
 
-// GetPhotos возвращает все фотографии
-func GetPhotos() []models.Photo {
-	return photos
+// GetEntitiesCounts возвращает количество сущностей каждого типа
+func (r *Repository) GetEntitiesCounts() (photoCount, albumCount, tagCount int) {
+	return r.photoStore.Count(), r.albumStore.Count(), r.tagStore.Count()
 }
 
-// GetAlbums возвращает все альбомы
-func GetAlbums() []models.Album {
-	return albums
-}
-
-// GetTags возвращает все теги
-func GetTags() []models.Tag {
-	return tags
+// GetNewEntities возвращает новые сущности с момента последнего вызова
+func (r *Repository) GetNewEntities() (newPhotos []models.Photo, newAlbums []models.Album, newTags []models.Tag) {
+	return r.photoStore.GetNew(), r.albumStore.GetNew(), r.tagStore.GetNew()
 }

@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"mpm/internal/handlers"
+	"mpm/internal/repository"
 	"mpm/internal/service"
 	"mpm/internal/storage"
 	"net/http"
@@ -10,24 +11,31 @@ import (
 )
 
 func main() {
+	// Создаем репозиторий
+	repo := repository.NewRepository()
 	// Инициализация хранилища пользователей
 	userStorage := storage.NewUserStorage()
 
 	// Создание обработчика для пользователей
 	userHandler := handlers.NewUserHandler(userStorage)
 
+	entityService := service.NewEntityService(repo)
+
 	// Вызываем функцию генерации и сохранения сущностей сразу
-	err := service.GenerateAndSaveEntities()
+	err := entityService.GenerateAndSaveEntities()
 	if err != nil {
 		log.Fatalf("Ошибка при генерации и сохранении сущностей: %v", err)
 	}
+
+	// Запускаем планировщик для периодической генерации сущностей
 	go func() {
 		ticker := time.NewTicker(30 * time.Second)
 		defer ticker.Stop()
 
 		for range ticker.C {
 			log.Println("Запланированная генерация статических сущностей")
-			err := service.GenerateAndSaveEntities()
+			// Используем экземпляр сервиса вместо глобальной функции:
+			err := entityService.GenerateAndSaveEntities()
 			if err != nil {
 				log.Printf("Ошибка при генерации и сохранении сущностей: %v", err)
 			}
