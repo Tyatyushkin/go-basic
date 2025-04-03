@@ -112,3 +112,81 @@ func (s *PhotoStore) Count() int {
 
 	return len(s.items)
 }
+
+// NewAlbumStore создает новое хранилище альбомов
+func NewAlbumStore() *AlbumStore {
+	return &AlbumStore{
+		items: make([]models.Album, 0),
+	}
+}
+
+// Add добавляет альбом в хранилище
+func (s *AlbumStore) Add(album models.Album) error {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	s.items = append(s.items, album)
+	fmt.Printf("Сохранен альбом: ID=%d, Title=%s\n", album.ID, album.Name)
+	return nil
+}
+
+// AddEntity реализует интерфейс EntityStore
+func (s *AlbumStore) AddEntity(entity models.Entity) error {
+	if album, ok := entity.(models.Album); ok {
+		return s.Add(album)
+	}
+	return fmt.Errorf("неверный тип сущности для AlbumStore: %T", entity)
+}
+
+// GetAll возвращает копию всех альбомов
+func (s *AlbumStore) GetAll() []models.Album {
+	s.mutex.RLock()
+	defer s.mutex.RUnlock()
+
+	result := make([]models.Album, len(s.items))
+	copy(result, s.items)
+	return result
+}
+
+// GetAllEntities реализует интерфейс EntityStore
+func (s *AlbumStore) GetAllEntities() []models.Entity {
+	albums := s.GetAll()
+	entities := make([]models.Entity, len(albums))
+	for i, album := range albums {
+		entities[i] = album
+	}
+	return entities
+}
+
+// GetNew возвращает новые альбомы с момента последнего вызова
+func (s *AlbumStore) GetNew() []models.Album {
+	s.mutex.RLock()
+	defer s.mutex.RUnlock()
+
+	if s.lastIndex >= len(s.items) {
+		return []models.Album{}
+	}
+
+	result := make([]models.Album, len(s.items)-s.lastIndex)
+	copy(result, s.items[s.lastIndex:])
+	s.lastIndex = len(s.items)
+	return result
+}
+
+// GetNewEntities реализует интерфейс EntityStore
+func (s *AlbumStore) GetNewEntities() []models.Entity {
+	albums := s.GetNew()
+	entities := make([]models.Entity, len(albums))
+	for i, album := range albums {
+		entities[i] = album
+	}
+	return entities
+}
+
+// Count возвращает количество альбомов
+func (s *AlbumStore) Count() int {
+	s.mutex.RLock()
+	defer s.mutex.RUnlock()
+
+	return len(s.items)
+}
