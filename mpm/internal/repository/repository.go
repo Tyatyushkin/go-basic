@@ -6,6 +6,13 @@ import (
 	"sync"
 )
 
+// Repository объединяет все хранилища сущностей
+type Repository struct {
+	photoStore *PhotoStore
+	albumStore *AlbumStore
+	tagStore   *TagStore
+}
+
 // Хранилище для всех типов сущностей
 var (
 	photos []models.Photo
