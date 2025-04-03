@@ -9,63 +9,71 @@ import (
 	"time"
 )
 
+// EntityService служит для работы с сущностями через репозиторий
+type EntityService struct {
+	repo              *repository.Repository
+	monitoringStarted sync.Once
+	mutex             sync.Mutex
+}
+
+// NewEntityService создает новый сервис для работы с сущностями
+func NewEntityService(repo *repository.Repository) *EntityService {
+	return &EntityService{
+		repo: repo,
+	}
+}
+
 // EntityJob структура для передачи сущности и ее типа в горутину
 type EntityJob struct {
 	Entity models.Entity
 	Type   string // Тип сущности для определения куда сохранять
 }
 
-// GenerateAndSaveEntities функция, которая создает разные структуры
-// из internal/model и передает их в функцию слоя internal/repository
-func GenerateAndSaveEntities() error {
-	// Инициализируем хранилище, если оно еще не инициализировано
-	repository.Initialize()
-
+// GenerateAndSaveEntities генерирует и сохраняет сущности в репозитории
+func (s *EntityService) GenerateAndSaveEntities() error {
 	entityChannel := make(chan EntityJob, 100)
 
 	var wg sync.WaitGroup
 
 	wg.Add(1)
-	go generateEntities(entityChannel, &wg)
+	go s.generateEntities(entityChannel, &wg)
 
 	// Запускаем несколько горутин для сохранения сущностей
 	const numWorkers = 3
 	wg.Add(numWorkers)
 	for i := 0; i < numWorkers; i++ {
-		go saveEntities(entityChannel, &wg, i)
+		go s.saveEntities(entityChannel, &wg, i)
 	}
 
-	// Запускаем горутину для мониторинга изменений в слайсах (только если еще не запущена)
-	startEntityMonitoring()
+	// Запускаем горутину для мониторинга изменений
+	s.startEntityMonitoring()
 
 	// Ожидаем завершения всех горутин
 	wg.Wait()
 
-	// Для демонстрации выводим количество сущностей в каждом слайсе
-	fmt.Printf("Всего фотографий: %d\n", len(repository.GetPhotos()))
-	fmt.Printf("Всего альбомов: %d\n", len(repository.GetAlbums()))
-	fmt.Printf("Всего тегов: %d\n", len(repository.GetTags()))
+	// Получаем количество сущностей
+	photoCount, albumCount, tagCount := s.repo.GetEntitiesCounts()
+	fmt.Printf("Всего фотографий: %d\n", photoCount)
+	fmt.Printf("Всего альбомов: %d\n", albumCount)
+	fmt.Printf("Всего тегов: %d\n", tagCount)
 
 	return nil
 }
 
-// Переменная для отслеживания, запущен ли мониторинг
-var monitoringStarted sync.Once
-
 // startEntityMonitoring запускает горутину мониторинга сущностей
-func startEntityMonitoring() {
+func (s *EntityService) startEntityMonitoring() {
 	// Используем sync.Once для гарантии, что мониторинг запускается только один раз
-	monitoringStarted.Do(func() {
-		go monitorEntities()
+	s.monitoringStarted.Do(func() {
+		go s.monitorEntities()
 	})
 }
 
-// monitorEntities следит за изменениями в слайсах и логирует новые сущности
-func monitorEntities() {
+// monitorEntities следит за изменениями в репозитории и логирует новые сущности
+func (s *EntityService) monitorEntities() {
 	log.Println("Запуск мониторинга сущностей")
 
-	// Начальное количество элементов в каждом слайсе
-	lastPhotoCount, lastAlbumCount, lastTagCount := repository.GetEntitiesCounts()
+	// Начальное количество элементов
+	lastPhotoCount, lastAlbumCount, lastTagCount := s.repo.GetEntitiesCounts()
 
 	// Создаем тикер для периодической проверки
 	ticker := time.NewTicker(200 * time.Millisecond)
@@ -73,7 +81,7 @@ func monitorEntities() {
 
 	for range ticker.C {
 		// Получаем текущее количество элементов
-		currentPhotoCount, currentAlbumCount, currentTagCount := repository.GetEntitiesCounts()
+		currentPhotoCount, currentAlbumCount, currentTagCount := s.repo.GetEntitiesCounts()
 
 		// Проверяем, были ли добавлены новые элементы
 		if currentPhotoCount > lastPhotoCount ||
@@ -81,8 +89,7 @@ func monitorEntities() {
 			currentTagCount > lastTagCount {
 
 			// Получаем новые элементы
-			newPhotos, newAlbums, newTags := repository.GetNewEntities(
-				lastPhotoCount, lastAlbumCount, lastTagCount)
+			newPhotos, newAlbums, newTags := s.repo.GetNewEntities()
 
 			// Логируем новые фотографии
 			for _, photo := range newPhotos {
@@ -111,7 +118,7 @@ func monitorEntities() {
 }
 
 // generateEntities генерирует различные сущности и отправляет их в канал
-func generateEntities(entityChannel chan<- EntityJob, wg *sync.WaitGroup) {
+func (s *EntityService) generateEntities(entityChannel chan<- EntityJob, wg *sync.WaitGroup) {
 	defer wg.Done()
 	defer close(entityChannel) // Закрываем канал после генерации всех сущностей
 
@@ -154,11 +161,10 @@ func generateEntities(entityChannel chan<- EntityJob, wg *sync.WaitGroup) {
 	}
 
 	fmt.Println("Генерация сущностей завершена")
-
 }
 
 // saveEntities получает сущности из канала и сохраняет их
-func saveEntities(entityChannel <-chan EntityJob, wg *sync.WaitGroup, workerID int) {
+func (s *EntityService) saveEntities(entityChannel <-chan EntityJob, wg *sync.WaitGroup, workerID int) {
 	defer wg.Done()
 
 	// Создаем отдельные слайсы для каждого типа сущностей
@@ -184,35 +190,33 @@ func saveEntities(entityChannel <-chan EntityJob, wg *sync.WaitGroup, workerID i
 	}
 
 	// Сохраняем каждый тип сущностей пакетно
-	mutex := &sync.Mutex{}
-
 	if len(photos) > 0 {
-		mutex.Lock()
-		err := repository.SaveEntities(photos)
+		s.mutex.Lock()
+		err := s.repo.SaveEntities(photos)
+		s.mutex.Unlock()
 		if err != nil {
 			return
 		}
-		mutex.Unlock()
-		fmt.Printf("Worкer %d: сохранено %d фотографий\n", workerID, len(photos))
+		fmt.Printf("Worker %d: сохранено %d фотографий\n", workerID, len(photos))
 	}
 
 	if len(albums) > 0 {
-		mutex.Lock()
-		err := repository.SaveEntities(albums)
+		s.mutex.Lock()
+		err := s.repo.SaveEntities(albums)
+		s.mutex.Unlock()
 		if err != nil {
 			return
 		}
-		mutex.Unlock()
 		fmt.Printf("Worker %d: сохранено %d альбомов\n", workerID, len(albums))
 	}
 
 	if len(tags) > 0 {
-		mutex.Lock()
-		err := repository.SaveEntities(tags)
+		s.mutex.Lock()
+		err := s.repo.SaveEntities(tags)
+		s.mutex.Unlock()
 		if err != nil {
 			return
 		}
-		mutex.Unlock()
 		fmt.Printf("Worker %d: сохранено %d тегов\n", workerID, len(tags))
 	}
 }
