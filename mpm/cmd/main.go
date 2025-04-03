@@ -15,6 +15,8 @@ import (
 )
 
 func main() {
+	// Создаем репозиторий
+	repo := repository.NewRepository()
 	// Создаем контекст
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -35,8 +37,10 @@ func main() {
 	// Создание обработчика для пользователей
 	userHandler := handlers.NewUserHandler(userStorage)
 
+	entityService := service.NewEntityService(repo)
+
 	// Вызываем функцию генерации и сохранения сущностей сразу
-	err := service.GenerateAndSaveEntities()
+	err := entityService.GenerateAndSaveEntities()
 	if err != nil {
 		log.Fatalf("Ошибка при генерации и сохранении сущностей: %v", err)
 	}
