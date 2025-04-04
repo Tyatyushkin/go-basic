@@ -40,6 +40,9 @@ func main() {
 
 	entityService := service.NewEntityService(repo)
 
+	// Запускаем мониторинг с контекстом
+	entityService.StartMonitoring(ctx)
+
 	// Вызываем функцию генерации и сохранения сущностей сразу
 	err := entityService.GenerateAndSaveEntities()
 	if err != nil {
@@ -49,11 +52,17 @@ func main() {
 		ticker := time.NewTicker(30 * time.Second)
 		defer ticker.Stop()
 
-		for range ticker.C {
-			log.Println("Запланированная генерация статических сущностей")
-			err := entityService.GenerateAndSaveEntities()
-			if err != nil {
-				log.Printf("Ошибка при генерации и сохранении сущностей: %v", err)
+		for {
+			select {
+			case <-ctx.Done():
+				log.Println("Генерация сущностей остановлена")
+				return
+			case <-ticker.C:
+				log.Println("Запланированная генерация статических сущностей")
+				err := entityService.GenerateAndSaveEntities()
+				if err != nil {
+					log.Printf("Ошибка при генерации и сохранении сущностей: %v", err)
+				}
 			}
 		}
 	}()

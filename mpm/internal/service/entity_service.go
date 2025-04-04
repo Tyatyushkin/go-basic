@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"mpm/internal/models"
@@ -44,10 +45,6 @@ func (s *EntityService) GenerateAndSaveEntities() error {
 	for i := 0; i < numWorkers; i++ {
 		go s.saveEntities(entityChannel, &wg, i)
 	}
-
-	// Запускаем горутину для мониторинга изменений
-	s.startEntityMonitoring()
-
 	// Ожидаем завершения всех горутин
 	wg.Wait()
 
@@ -60,16 +57,13 @@ func (s *EntityService) GenerateAndSaveEntities() error {
 	return nil
 }
 
-// startEntityMonitoring запускает горутину мониторинга сущностей
-func (s *EntityService) startEntityMonitoring() {
-	// Используем sync.Once для гарантии, что мониторинг запускается только один раз
-	s.monitoringStarted.Do(func() {
-		go s.monitorEntities()
-	})
+// StartMonitoring запускает мониторинг сущностей с поддержкой отмены через контекст
+func (s *EntityService) StartMonitoring(ctx context.Context) {
+	go s.monitorEntities(ctx)
 }
 
 // monitorEntities следит за изменениями в репозитории и логирует новые сущности
-func (s *EntityService) monitorEntities() {
+func (s *EntityService) monitorEntities(ctx context.Context) {
 	log.Println("Запуск мониторинга сущностей")
 
 	// Начальное количество элементов
