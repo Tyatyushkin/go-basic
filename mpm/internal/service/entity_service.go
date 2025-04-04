@@ -73,40 +73,47 @@ func (s *EntityService) monitorEntities(ctx context.Context) {
 	ticker := time.NewTicker(200 * time.Millisecond)
 	defer ticker.Stop()
 
-	for range ticker.C {
-		// Получаем текущее количество элементов
-		currentPhotoCount, currentAlbumCount, currentTagCount := s.repo.GetEntitiesCounts()
+	for {
+		select {
+		case <-ctx.Done():
+			// Обрабатываем отмену контекста
+			log.Println("Мониторинг сущностей остановлен")
+			return
+		case <-ticker.C:
+			// Получаем текущее количество элементов
+			currentPhotoCount, currentAlbumCount, currentTagCount := s.repo.GetEntitiesCounts()
 
-		// Проверяем, были ли добавлены новые элементы
-		if currentPhotoCount > lastPhotoCount ||
-			currentAlbumCount > lastAlbumCount ||
-			currentTagCount > lastTagCount {
+			// Проверяем, были ли добавлены новые элементы
+			if currentPhotoCount > lastPhotoCount ||
+				currentAlbumCount > lastAlbumCount ||
+				currentTagCount > lastTagCount {
 
-			// Получаем новые элементы
-			newPhotos, newAlbums, newTags := s.repo.GetNewEntities()
+				// Получаем новые элементы
+				newPhotos, newAlbums, newTags := s.repo.GetNewEntities()
 
-			// Логируем новые фотографии
-			for _, photo := range newPhotos {
-				log.Printf("МОНИТОР: Обнаружена новая фотография - ID: %d, Название: %s",
-					photo.ID, photo.Name)
+				// Логируем новые фотографии
+				for _, photo := range newPhotos {
+					log.Printf("МОНИТОР: Обнаружена новая фотография - ID: %d, Название: %s",
+						photo.ID, photo.Name)
+				}
+
+				// Логируем новые альбомы
+				for _, album := range newAlbums {
+					log.Printf("МОНИТОР: Обнаружен новый альбом - ID: %d, Название: %s",
+						album.ID, album.Name)
+				}
+
+				// Логируем новые теги
+				for _, tag := range newTags {
+					log.Printf("МОНИТОР: Обнаружен новый тег - ID: %d, Название: %s",
+						tag.ID, tag.Name)
+				}
+
+				// Обновляем счетчики
+				lastPhotoCount = currentPhotoCount
+				lastAlbumCount = currentAlbumCount
+				lastTagCount = currentTagCount
 			}
-
-			// Логируем новые альбомы
-			for _, album := range newAlbums {
-				log.Printf("МОНИТОР: Обнаружен новый альбом - ID: %d, Название: %s",
-					album.ID, album.Name)
-			}
-
-			// Логируем новые теги
-			for _, tag := range newTags {
-				log.Printf("МОНИТОР: Обнаружен новый тег - ID: %d, Название: %s",
-					tag.ID, tag.Name)
-			}
-
-			// Обновляем счетчики
-			lastPhotoCount = currentPhotoCount
-			lastAlbumCount = currentAlbumCount
-			lastTagCount = currentTagCount
 		}
 	}
 }
