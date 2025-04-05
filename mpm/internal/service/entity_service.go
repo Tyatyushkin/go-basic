@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"mpm/internal/models"
@@ -30,7 +31,15 @@ type EntityJob struct {
 }
 
 // GenerateAndSaveEntities генерирует и сохраняет сущности в репозитории
-func (s *EntityService) GenerateAndSaveEntities() error {
+func (s *EntityService) GenerateAndSaveEntities(ctx context.Context) error {
+	// Проверка контекста перед началом генерации
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+		// Продолжаем выполнение
+	}
+
 	entityChannel := make(chan EntityJob, 100)
 
 	var wg sync.WaitGroup
@@ -45,31 +54,38 @@ func (s *EntityService) GenerateAndSaveEntities() error {
 		go s.saveEntities(entityChannel, &wg, i)
 	}
 
-	// Запускаем горутину для мониторинга изменений
-	s.startEntityMonitoring()
+	// Создаем канал для сигнала завершения
+	done := make(chan struct{})
 
-	// Ожидаем завершения всех горутин
-	wg.Wait()
+	// Запускаем горутину для ожидания завершения всех операций
+	go func() {
+		wg.Wait()
+		close(done)
+	}()
 
-	// Получаем количество сущностей
-	photoCount, albumCount, tagCount := s.repo.GetEntitiesCounts()
-	fmt.Printf("Всего фотографий: %d\n", photoCount)
-	fmt.Printf("Всего альбомов: %d\n", albumCount)
-	fmt.Printf("Всего тегов: %d\n", tagCount)
-
-	return nil
+	// Ждем либо завершения всех операций, либо отмены контекста
+	select {
+	case <-done:
+		// Получаем количество сущностей после успешного завершения
+		photoCount, albumCount, tagCount := s.repo.GetEntitiesCounts()
+		fmt.Printf("Всего фотографий: %d\n", photoCount)
+		fmt.Printf("Всего альбомов: %d\n", albumCount)
+		fmt.Printf("Всего тегов: %d\n", tagCount)
+		return nil
+	case <-ctx.Done():
+		// Контекст был отменен, возвращаем соответствующую ошибку
+		log.Println("Генерация и сохранение сущностей прервано по сигналу")
+		return ctx.Err()
+	}
 }
 
-// startEntityMonitoring запускает горутину мониторинга сущностей
-func (s *EntityService) startEntityMonitoring() {
-	// Используем sync.Once для гарантии, что мониторинг запускается только один раз
-	s.monitoringStarted.Do(func() {
-		go s.monitorEntities()
-	})
+// StartMonitoring запускает мониторинг сущностей с поддержкой отмены через контекст
+func (s *EntityService) StartMonitoring(ctx context.Context) {
+	go s.monitorEntities(ctx)
 }
 
 // monitorEntities следит за изменениями в репозитории и логирует новые сущности
-func (s *EntityService) monitorEntities() {
+func (s *EntityService) monitorEntities(ctx context.Context) {
 	log.Println("Запуск мониторинга сущностей")
 
 	// Начальное количество элементов
@@ -79,40 +95,47 @@ func (s *EntityService) monitorEntities() {
 	ticker := time.NewTicker(200 * time.Millisecond)
 	defer ticker.Stop()
 
-	for range ticker.C {
-		// Получаем текущее количество элементов
-		currentPhotoCount, currentAlbumCount, currentTagCount := s.repo.GetEntitiesCounts()
+	for {
+		select {
+		case <-ctx.Done():
+			// Обрабатываем отмену контекста
+			log.Println("Мониторинг сущностей остановлен")
+			return
+		case <-ticker.C:
+			// Получаем текущее количество элементов
+			currentPhotoCount, currentAlbumCount, currentTagCount := s.repo.GetEntitiesCounts()
 
-		// Проверяем, были ли добавлены новые элементы
-		if currentPhotoCount > lastPhotoCount ||
-			currentAlbumCount > lastAlbumCount ||
-			currentTagCount > lastTagCount {
+			// Проверяем, были ли добавлены новые элементы
+			if currentPhotoCount > lastPhotoCount ||
+				currentAlbumCount > lastAlbumCount ||
+				currentTagCount > lastTagCount {
 
-			// Получаем новые элементы
-			newPhotos, newAlbums, newTags := s.repo.GetNewEntities()
+				// Получаем новые элементы
+				newPhotos, newAlbums, newTags := s.repo.GetNewEntities()
 
-			// Логируем новые фотографии
-			for _, photo := range newPhotos {
-				log.Printf("МОНИТОР: Обнаружена новая фотография - ID: %d, Название: %s",
-					photo.ID, photo.Name)
+				// Логируем новые фотографии
+				for _, photo := range newPhotos {
+					log.Printf("МОНИТОР: Обнаружена новая фотография - ID: %d, Название: %s",
+						photo.ID, photo.Name)
+				}
+
+				// Логируем новые альбомы
+				for _, album := range newAlbums {
+					log.Printf("МОНИТОР: Обнаружен новый альбом - ID: %d, Название: %s",
+						album.ID, album.Name)
+				}
+
+				// Логируем новые теги
+				for _, tag := range newTags {
+					log.Printf("МОНИТОР: Обнаружен новый тег - ID: %d, Название: %s",
+						tag.ID, tag.Name)
+				}
+
+				// Обновляем счетчики
+				lastPhotoCount = currentPhotoCount
+				lastAlbumCount = currentAlbumCount
+				lastTagCount = currentTagCount
 			}
-
-			// Логируем новые альбомы
-			for _, album := range newAlbums {
-				log.Printf("МОНИТОР: Обнаружен новый альбом - ID: %d, Название: %s",
-					album.ID, album.Name)
-			}
-
-			// Логируем новые теги
-			for _, tag := range newTags {
-				log.Printf("МОНИТОР: Обнаружен новый тег - ID: %d, Название: %s",
-					tag.ID, tag.Name)
-			}
-
-			// Обновляем счетчики
-			lastPhotoCount = currentPhotoCount
-			lastAlbumCount = currentAlbumCount
-			lastTagCount = currentTagCount
 		}
 	}
 }
