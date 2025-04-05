@@ -9,7 +9,6 @@ import (
 	"mpm/internal/service"
 	"mpm/internal/storage"
 	"net/http"
-	"os"
 	"os/signal"
 	"syscall"
 	"time"
@@ -18,20 +17,16 @@ import (
 func main() {
 	// Создаем репозиторий
 	repo := repository.NewRepository()
-	// Создаем контекст
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
 
-	// Канал для получения сигналов от ОС
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+	// Создаем контекст, который будет отменен при получении указанных сигналов
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	// Освобождаем ресурсы после завершения
+	defer stop()
 
 	go func() {
-		sig := <-sigChan
-		log.Printf("Получен сигнал: %v, начинаем graceful shutdown", sig)
-		cancel() // Отменяем контекст для корректного завершения всех горутин
+		<-ctx.Done()
+		log.Println("Получен сигнал, начинаем graceful shutdown")
 	}()
-
 	// Инициализация хранилища пользователей
 	userStorage := storage.NewUserStorage()
 
@@ -46,7 +41,9 @@ func main() {
 	// Вызываем функцию генерации и сохранения сущностей сразу
 	err := entityService.GenerateAndSaveEntities()
 	if err != nil {
-		log.Fatalf("Ошибка при генерации и сохранении сущностей: %v", err)
+		log.Printf("Ошибка при генерации и сохранении сущностей: %v", err)
+		stop() // Вместо log.Fatal отменяем контекст
+		return // И выходим из функции после выполнения всех defer
 	}
 	go func() {
 		ticker := time.NewTicker(30 * time.Second)
@@ -90,7 +87,8 @@ func main() {
 
 	select {
 	case err := <-serverError:
-		log.Fatalf("Ошибка запуска сервера: %v", err)
+		log.Printf("Ошибка запуска сервера: %v", err)
+		return
 	case <-ctx.Done():
 		// Получен сигнал для завершения работы
 		log.Println("Начинаем graceful shutdown HTTP сервера...")
@@ -98,7 +96,7 @@ func main() {
 		defer shutdownCancel()
 
 		if err := server.Shutdown(shutdownCtx); err != nil {
-			log.Fatalf("Ошибка при graceful shutdown сервера: %v", err)
+			log.Printf("Ошибка при graceful shutdown сервера: %v", err)
 		}
 
 		log.Println("HTTP сервер остановлен")
