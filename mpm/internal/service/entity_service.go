@@ -31,7 +31,15 @@ type EntityJob struct {
 }
 
 // GenerateAndSaveEntities генерирует и сохраняет сущности в репозитории
-func (s *EntityService) GenerateAndSaveEntities() error {
+func (s *EntityService) GenerateAndSaveEntities(ctx context.Context) error {
+	// Проверка контекста перед началом генерации
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+		// Продолжаем выполнение
+	}
+
 	entityChannel := make(chan EntityJob, 100)
 
 	var wg sync.WaitGroup
@@ -45,16 +53,30 @@ func (s *EntityService) GenerateAndSaveEntities() error {
 	for i := 0; i < numWorkers; i++ {
 		go s.saveEntities(entityChannel, &wg, i)
 	}
-	// Ожидаем завершения всех горутин
-	wg.Wait()
 
-	// Получаем количество сущностей
-	photoCount, albumCount, tagCount := s.repo.GetEntitiesCounts()
-	fmt.Printf("Всего фотографий: %d\n", photoCount)
-	fmt.Printf("Всего альбомов: %d\n", albumCount)
-	fmt.Printf("Всего тегов: %d\n", tagCount)
+	// Создаем канал для сигнала завершения
+	done := make(chan struct{})
 
-	return nil
+	// Запускаем горутину для ожидания завершения всех операций
+	go func() {
+		wg.Wait()
+		close(done)
+	}()
+
+	// Ждем либо завершения всех операций, либо отмены контекста
+	select {
+	case <-done:
+		// Получаем количество сущностей после успешного завершения
+		photoCount, albumCount, tagCount := s.repo.GetEntitiesCounts()
+		fmt.Printf("Всего фотографий: %d\n", photoCount)
+		fmt.Printf("Всего альбомов: %d\n", albumCount)
+		fmt.Printf("Всего тегов: %d\n", tagCount)
+		return nil
+	case <-ctx.Done():
+		// Контекст был отменен, возвращаем соответствующую ошибку
+		log.Println("Генерация и сохранение сущностей прервано по сигналу")
+		return ctx.Err()
+	}
 }
 
 // StartMonitoring запускает мониторинг сущностей с поддержкой отмены через контекст

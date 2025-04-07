@@ -39,7 +39,7 @@ func main() {
 	entityService.StartMonitoring(ctx)
 
 	// Вызываем функцию генерации и сохранения сущностей сразу
-	err := entityService.GenerateAndSaveEntities()
+	err := entityService.GenerateAndSaveEntities(ctx)
 	if err != nil {
 		log.Printf("Ошибка при генерации и сохранении сущностей: %v", err)
 		stop() // Вместо log.Fatal отменяем контекст
@@ -56,7 +56,7 @@ func main() {
 				return
 			case <-ticker.C:
 				log.Println("Запланированная генерация статических сущностей")
-				err := entityService.GenerateAndSaveEntities()
+				err := entityService.GenerateAndSaveEntities(ctx)
 				if err != nil {
 					log.Printf("Ошибка при генерации и сохранении сущностей: %v", err)
 				}
