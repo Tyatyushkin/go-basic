@@ -1,23 +1,44 @@
 package repository
 
 import (
+	"context"
 	"fmt"
+	"log"
 	"mpm/internal/models"
 )
 
 // Repository объединяет все хранилища сущностей
+// Repository объединяет доступ к хранилищу сущностей
 type Repository struct {
-	photoStore *PhotoStore
-	albumStore *AlbumStore
-	tagStore   *TagStore
+	storage EntityStorage
 }
 
-// NewRepository создаёт новый экземпляр репозитория
+// NewRepository создает новый экземпляр репозитория
 func NewRepository() *Repository {
+	// Используем фабрику для создания хранилища нужного типа
+	storage, err := CreateStorage()
+	if err != nil {
+		log.Printf("Ошибка при создании хранилища: %v", err)
+		log.Println("Будет использовано JSON-хранилище по умолчанию")
+		storage = NewJSONStorage("", 30) // Используем значения по умолчанию
+	}
+
+	// Загружаем данные при создании репозитория
+	if err := storage.Load(); err != nil {
+		log.Printf("Предупреждение: ошибка при загрузке данных: %v", err)
+	}
+
 	return &Repository{
-		photoStore: NewPhotoStore(),
-		albumStore: NewAlbumStore(),
-		tagStore:   NewTagStore(),
+		storage: storage,
+	}
+}
+
+// InitStorage инициализирует хранилище и запускает автоматическое сохранение
+// для JSON-хранилища. Для других типов хранилищ может выполнять другие действия.
+func (r *Repository) InitStorage(ctx context.Context) {
+	// Проверяем, поддерживает ли хранилище автоматическое сохранение
+	if jsonStorage, ok := r.storage.(*JSONStorage); ok {
+		jsonStorage.StartAutoSave(ctx)
 	}
 }
 
