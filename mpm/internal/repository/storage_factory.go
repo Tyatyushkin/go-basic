@@ -32,6 +32,9 @@ func CreateStorage() (EntityStorage, error) {
 	case StorageTypeJSON:
 		// Получаем путь к директории данных
 		dataDir := os.Getenv("MPM_DATA_PATH")
+		if dataDir == "" {
+			dataDir = getDefaultDataDir()
+		}
 		// Получаем интервал сохранения (в секундах)
 		saveInterval := 30 * time.Second
 		if intervalStr := os.Getenv("MPM_SAVE_INTERVAL"); intervalStr != "" {
