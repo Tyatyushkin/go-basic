@@ -15,13 +15,22 @@ import (
 )
 
 func main() {
+	// Выводим информацию о доступных переменных окружения
+	log.Println("Доступные переменные окружения для настройки хранилища:")
+	log.Println("MPM_STORAGE_TYPE - тип хранилища (json или postgres, по умолчанию json)")
+	log.Println("MPM_DATA_PATH - путь к директории с данными для JSON-хранилища")
+
 	// Создаем репозиторий
 	repo := repository.NewRepository()
+	log.Println("Репозиторий инициализирован")
 
 	// Создаем контекст, который будет отменен при получении указанных сигналов
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	// Освобождаем ресурсы после завершения
 	defer stop()
+
+	// Инициализируем хранилище и запускаем автоматическое сохранение
+	repo.InitStorage(ctx)
 
 	go func() {
 		<-ctx.Done()
