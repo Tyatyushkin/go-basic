@@ -15,7 +15,7 @@ const (
 	// В будущем можно добавить другие типы: redis, mysql и т.д.
 )
 
-// StorageFactory создает экземпляр хранилища нужного типа
+// CreateStorage создает экземпляр хранилища нужного типа
 func CreateStorage() (EntityStorage, error) {
 	// Получаем тип хранилища из переменной окружения
 	storageType := os.Getenv("MPM_STORAGE_TYPE")
