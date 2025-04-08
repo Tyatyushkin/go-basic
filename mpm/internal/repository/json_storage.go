@@ -50,9 +50,21 @@ func NewJSONStorage(dataDir string, saveInterval time.Duration) *JSONStorage {
 // getDefaultDataDir возвращает директорию для хранения данных по умолчанию
 func getDefaultDataDir() string {
 	dataDir := os.Getenv("MPM_DATA_PATH")
-	if dataDir == "" {
-		dataDir = "/opt/mpm/data"
+	if dataDir != "" {
+		return dataDir
 	}
+
+	// Пытаемся использовать домашнюю директорию пользователя
+	homeDir, err := os.UserHomeDir()
+	if err == nil {
+		dataDir = filepath.Join(homeDir, ".mpm", "data")
+		log.Printf("MPM_DATA_PATH не указан, используем директорию в домашнем каталоге: %s", dataDir)
+		return dataDir
+	}
+
+	// Запасной вариант, если не удалось определить домашнюю директорию
+	dataDir = "./data"
+	log.Printf("Не удалось определить домашнюю директорию, используем локальную директорию: %s", dataDir)
 	return dataDir
 }
 
@@ -223,28 +235,22 @@ func (s *JSONStorage) persistData() error {
 		return fmt.Errorf("ошибка при создании директории данных: %v", err)
 	}
 
-	// Сохраняем фотографии
-	if len(s.photos) > 0 {
-		photosPath := filepath.Join(s.dataDir, "photos.json")
-		if err := s.saveFile(photosPath, s.photos); err != nil {
-			return fmt.Errorf("ошибка при сохранении фотографий: %v", err)
-		}
+	// Сохраняем фотографии (всегда, даже если пустые)
+	photosPath := filepath.Join(s.dataDir, "photos.json")
+	if err := s.saveFile(photosPath, s.photos); err != nil {
+		return fmt.Errorf("ошибка при сохранении фотографий: %v", err)
 	}
 
-	// Сохраняем альбомы
-	if len(s.albums) > 0 {
-		albumsPath := filepath.Join(s.dataDir, "albums.json")
-		if err := s.saveFile(albumsPath, s.albums); err != nil {
-			return fmt.Errorf("ошибка при сохранении альбомов: %v", err)
-		}
+	// Сохраняем альбомы (всегда, даже если пустые)
+	albumsPath := filepath.Join(s.dataDir, "albums.json")
+	if err := s.saveFile(albumsPath, s.albums); err != nil {
+		return fmt.Errorf("ошибка при сохранении альбомов: %v", err)
 	}
 
-	// Сохраняем теги
-	if len(s.tags) > 0 {
-		tagsPath := filepath.Join(s.dataDir, "tags.json")
-		if err := s.saveFile(tagsPath, s.tags); err != nil {
-			return fmt.Errorf("ошибка при сохранении тегов: %v", err)
-		}
+	// Сохраняем теги (всегда, даже если пустые)
+	tagsPath := filepath.Join(s.dataDir, "tags.json")
+	if err := s.saveFile(tagsPath, s.tags); err != nil {
+		return fmt.Errorf("ошибка при сохранении тегов: %v", err)
 	}
 
 	s.dirtyFlag = false
