@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"mpm/internal/models"
+	"time"
 )
 
 // Repository объединяет все хранилища сущностей
@@ -14,9 +15,9 @@ type Repository struct {
 }
 
 // NewRepository создает новый экземпляр репозитория
-func NewRepository() *Repository {
+func NewRepository(storageType, dataDir string, saveInterval time.Duration) *Repository {
 	// Используем фабрику для создания хранилища нужного типа
-	storage, err := CreateStorage()
+	storage, err := CreateStorage(storageType, dataDir, saveInterval)
 	if err != nil {
 		log.Printf("Ошибка при создании хранилища: %v", err)
 		log.Println("Будет использовано JSON-хранилище по умолчанию")

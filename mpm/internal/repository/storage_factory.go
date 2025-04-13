@@ -16,9 +16,7 @@ const (
 )
 
 // CreateStorage создает экземпляр хранилища нужного типа
-func CreateStorage() (EntityStorage, error) {
-	// Получаем тип хранилища из переменной окружения
-	storageType := os.Getenv("MPM_STORAGE_TYPE")
+func CreateStorage(storageType, dataDir string, saveInterval time.Duration) (EntityStorage, error) {
 	if storageType == "" {
 		storageType = StorageTypeJSON // По умолчанию используем JSON
 		log.Printf("Тип хранилища не указан, используется тип по умолчанию: %s", storageType)
@@ -30,20 +28,6 @@ func CreateStorage() (EntityStorage, error) {
 	// Создаем хранилище в зависимости от указанного типа
 	switch storageType {
 	case StorageTypeJSON:
-		// Получаем путь к директории данных
-		dataDir := os.Getenv("MPM_DATA_PATH")
-		if dataDir == "" {
-			dataDir = getDefaultDataDir()
-		}
-		// Получаем интервал сохранения (в секундах)
-		saveInterval := 30 * time.Second
-		if intervalStr := os.Getenv("MPM_SAVE_INTERVAL"); intervalStr != "" {
-			if interval, err := time.ParseDuration(intervalStr); err == nil {
-				saveInterval = interval
-			} else {
-				log.Printf("Ошибка разбора интервала сохранения: %v, используется значение по умолчанию: %v", err, saveInterval)
-			}
-		}
 
 		log.Printf("Используется JSON-хранилище с директорией %s и интервалом сохранения %v", dataDir, saveInterval)
 		return NewJSONStorage(dataDir, saveInterval), nil

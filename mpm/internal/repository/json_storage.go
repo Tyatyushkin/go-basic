@@ -33,9 +33,6 @@ type JSONStorage struct {
 
 // NewJSONStorage создает новое хранилище с сохранением в JSON
 func NewJSONStorage(dataDir string, saveInterval time.Duration) *JSONStorage {
-	if dataDir == "" {
-		dataDir = getDefaultDataDir()
-	}
 
 	return &JSONStorage{
 		dataDir:      dataDir,
@@ -45,27 +42,6 @@ func NewJSONStorage(dataDir string, saveInterval time.Duration) *JSONStorage {
 		tags:         make([]models.Tag, 0),
 		lastSaveTime: time.Now(),
 	}
-}
-
-// getDefaultDataDir возвращает директорию для хранения данных по умолчанию
-func getDefaultDataDir() string {
-	dataDir := os.Getenv("MPM_DATA_PATH")
-	if dataDir != "" {
-		return dataDir
-	}
-
-	// Пытаемся использовать домашнюю директорию пользователя
-	homeDir, err := os.UserHomeDir()
-	if err == nil {
-		dataDir = filepath.Join(homeDir, ".mpm", "data")
-		log.Printf("MPM_DATA_PATH не указан, используем директорию в домашнем каталоге: %s", dataDir)
-		return dataDir
-	}
-
-	// Запасной вариант, если не удалось определить домашнюю директорию
-	dataDir = "./data"
-	log.Printf("Не удалось определить домашнюю директорию, используем локальную директорию: %s", dataDir)
-	return dataDir
 }
 
 // Save Сохраняет одну сущность в JSON хранилище
