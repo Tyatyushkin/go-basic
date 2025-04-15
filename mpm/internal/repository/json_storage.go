@@ -149,41 +149,51 @@ func (s *JSONStorage) SaveBatch(entities []models.Entity) error {
 
 // Load загружает данные из JSON-файлов
 func (s *JSONStorage) Load() error {
-	// TODO добавить мьютексы
-
-	// Убеждаемся, что директория существует
-	if err := os.MkdirAll(s.dataDir, 0755); err != nil {
-		return fmt.Errorf("ошибка при создании директории данных: %v", err)
-	}
-
 	// Загружаем фотографии
 	photosPath := filepath.Join(s.dataDir, "photos.json")
 	s.photosMutex.Lock()
 	photosErr := s.loadFile(photosPath, &s.photos)
 	s.photosMutex.Unlock()
 	if photosErr != nil {
-		return fmt.Errorf("ошибка при загрузке фотографий: %v", err)
+		return fmt.Errorf("ошибка при загрузке фотографий: %v", photosErr)
 	}
 
 	// Загружаем альбомы
 	albumsPath := filepath.Join(s.dataDir, "albums.json")
-	if err := s.loadFile(albumsPath, &s.albums); err != nil && !os.IsNotExist(err) {
-		return fmt.Errorf("ошибка при загрузке альбомов: %v", err)
+	s.albumsMutex.Lock()
+	albumsErr := s.loadFile(albumsPath, &s.albums)
+	s.albumsMutex.Unlock()
+	if albumsErr != nil {
+		return fmt.Errorf("ошибка при загрузке альбомов: %v", albumsErr)
 	}
 
 	// Загружаем теги
 	tagsPath := filepath.Join(s.dataDir, "tags.json")
-	if err := s.loadFile(tagsPath, &s.tags); err != nil && !os.IsNotExist(err) {
-		return fmt.Errorf("ошибка при загрузке тегов: %v", err)
+	s.tagsMutex.Lock()
+	tagsErr := s.loadFile(tagsPath, &s.tags)
+	s.tagsMutex.Unlock()
+	if tagsErr != nil {
+		return fmt.Errorf("ошибка при загрузке тегов: %v", tagsErr)
 	}
 
 	// Устанавливаем индексы для отслеживания новых сущностей
+	s.photosMutex.Lock()
 	s.lastPhotoIndex = len(s.photos)
+	photosCount := s.lastPhotoIndex
+	s.photosMutex.Unlock()
+
+	s.albumsMutex.Lock()
 	s.lastAlbumIndex = len(s.albums)
+	albumsCount := s.lastAlbumIndex
+	s.albumsMutex.Unlock()
+
+	s.tagsMutex.Lock()
 	s.lastTagIndex = len(s.tags)
+	tagsCount := s.lastTagIndex
+	s.tagsMutex.Unlock()
 
 	log.Printf("Загружено: %d фотографий, %d альбомов, %d тегов",
-		len(s.photos), len(s.albums), len(s.tags))
+		photosCount, albumsCount, tagsCount)
 
 	return nil
 }
