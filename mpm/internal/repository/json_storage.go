@@ -37,6 +37,11 @@ type JSONStorage struct {
 	lastPhotoIndex int
 	lastAlbumIndex int
 	lastTagIndex   int
+
+	// Отдельные флаги для каждого типа данных
+	photosModified bool
+	albumsModified bool
+	tagsModified   bool
 }
 
 // NewJSONStorage создает новое хранилище с сохранением в JSON
@@ -68,18 +73,21 @@ func (s *JSONStorage) Save(entity models.Entity) error {
 	case models.Photo:
 		s.photosMutex.Lock()
 		s.photos = append(s.photos, e)
+		s.photosModified = true
 		s.photosMutex.Unlock()
 		log.Printf("Добавлена фотография: ID=%d, Название=%s", e.ID, e.Name)
 
 	case models.Album:
 		s.albumsMutex.Lock()
 		s.albums = append(s.albums, e)
+		s.albumsModified = true
 		s.albumsMutex.Unlock()
 		log.Printf("Добавлен альбом: ID=%d, Название=%s", e.ID, e.Name)
 
 	case models.Tag:
 		s.tagsMutex.Lock()
 		s.tags = append(s.tags, e)
+		s.tagsModified = true
 		s.tagsMutex.Unlock()
 		log.Printf("Добавлен тег: ID=%d, Название=%s", e.ID, e.Name)
 
@@ -253,11 +261,6 @@ func (s *JSONStorage) loadFile(filePath string, target interface{}) error {
 func (s *JSONStorage) persistData() error {
 	if !s.dirtyFlag {
 		return nil // Нет изменений для сохранения
-	}
-
-	// Убеждаемся, что директория существует
-	if err := os.MkdirAll(s.dataDir, 0755); err != nil {
-		return fmt.Errorf("ошибка при создании директории данных: %v", err)
 	}
 
 	// Сохраняем фотографии (всегда, даже если пустые)
