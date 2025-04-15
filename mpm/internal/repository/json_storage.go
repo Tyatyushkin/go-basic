@@ -266,22 +266,34 @@ func (s *JSONStorage) persistData() error {
 		return nil // Нет изменений для сохранения
 	}
 
-	// Сохраняем фотографии (всегда, даже если пустые)
-	photosPath := filepath.Join(s.dataDir, "photos.json")
-	if err := s.saveFile(photosPath, s.photos); err != nil {
-		return fmt.Errorf("ошибка при сохранении фотографий: %v", err)
+	// Сохраняем только те фотографии, для которых были изменения
+	if s.photosModified {
+		photosPath := filepath.Join(s.dataDir, "photos.json")
+		if err := s.saveFile(photosPath, s.photos); err != nil {
+			return fmt.Errorf("ошибка при сохранении фотографий: %v", err)
+		}
+		s.photosModified = false
+		log.Printf("Сохранены фотографии (%d)", len(s.photos))
 	}
 
-	// Сохраняем альбомы (всегда, даже если пустые)
-	albumsPath := filepath.Join(s.dataDir, "albums.json")
-	if err := s.saveFile(albumsPath, s.albums); err != nil {
-		return fmt.Errorf("ошибка при сохранении альбомов: %v", err)
+	// Сохраняем только те альбомы, для которых были изменения
+	if s.albumsModified {
+		albumsPath := filepath.Join(s.dataDir, "albums.json")
+		if err := s.saveFile(albumsPath, s.albums); err != nil {
+			return fmt.Errorf("ошибка при сохранении альбомов: %v", err)
+		}
+		s.albumsModified = false
+		log.Printf("Сохранены альбомы (%d)", len(s.albums))
 	}
 
-	// Сохраняем теги (всегда, даже если пустые)
-	tagsPath := filepath.Join(s.dataDir, "tags.json")
-	if err := s.saveFile(tagsPath, s.tags); err != nil {
-		return fmt.Errorf("ошибка при сохранении тегов: %v", err)
+	// Сохраняем только те теги, для которых были изменения
+	if s.tagsModified {
+		tagsPath := filepath.Join(s.dataDir, "tags.json")
+		if err := s.saveFile(tagsPath, s.tags); err != nil {
+			return fmt.Errorf("ошибка при сохранении тегов: %v", err)
+		}
+		s.tagsModified = false
+		log.Printf("Сохранены теги (%d)", len(s.tags))
 	}
 
 	s.dirtyFlag = false
