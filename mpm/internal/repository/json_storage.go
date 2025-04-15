@@ -224,15 +224,42 @@ func (s *JSONStorage) Load() error {
 
 // Persist сохраняет текущее состояние в JSON-файлы
 func (s *JSONStorage) Persist() error {
+	// Проверяем какие данные изменились
 	s.metaMutex.Lock()
-	s.photosMutex.Lock()
-	s.albumsMutex.Lock()
-	s.tagsMutex.Lock()
+	photosModified := s.photosModified
+	albumsModified := s.albumsModified
+	tagsModified := s.tagsModified
+	s.metaMutex.Unlock()
 
-	defer s.tagsMutex.Unlock()
-	defer s.albumsMutex.Unlock()
-	defer s.photosMutex.Unlock()
-	defer s.metaMutex.Unlock()
+	// Создаём функцию разблокировки
+	var unlock func()
+	unlock = func() {
+		if photosModified {
+			s.photosMutex.Unlock()
+		}
+		if albumsModified {
+			s.albumsMutex.Unlock()
+		}
+		if tagsModified {
+			s.tagsMutex.Unlock()
+		}
+	}
+
+	// Блокируем только нужные мьютексы
+	if photosModified {
+		s.photosMutex.Lock()
+	}
+
+	if albumsModified {
+		s.albumsMutex.Lock()
+	}
+
+	if tagsModified {
+		s.tagsMutex.Lock()
+	}
+
+	// Гарантируем разблокировку при выходе
+	defer unlock()
 
 	return s.persistData()
 }
