@@ -9,19 +9,43 @@ import (
 	"mpm/internal/service"
 	"mpm/internal/storage"
 	"net/http"
+	"os"
 	"os/signal"
 	"syscall"
 	"time"
 )
 
 func main() {
+	// Выводим информацию о доступных переменных окружения
+	log.Println("Доступные переменные окружения для настройки хранилища:")
+	log.Println("MPM_STORAGE_TYPE - тип хранилища (json или postgres, по умолчанию json)")
+	log.Println("MPM_DATA_PATH - путь к директории с данными для JSON-хранилища")
+
+	// Получаем настройки из переменных окружения
+	storageType := os.Getenv("MPM_STORAGE_TYPE")
+	dataDir := os.Getenv("MPM_DATA_PATH")
+	if dataDir == "" {
+		dataDir = "/opt/mpm/data" // Значение по умолчанию
+	}
+	saveInterval := 30 * time.Second
+	if intervalStr := os.Getenv("MPM_SAVE_INTERVAL"); intervalStr != "" {
+		if interval, err := time.ParseDuration(intervalStr); err == nil {
+			saveInterval = interval
+		}
+	}
+
 	// Создаем репозиторий
-	repo := repository.NewRepository()
+	repo := repository.NewRepository(storageType, dataDir, saveInterval)
+
+	log.Println("Репозиторий инициализирован")
 
 	// Создаем контекст, который будет отменен при получении указанных сигналов
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	// Освобождаем ресурсы после завершения
 	defer stop()
+
+	// Инициализируем хранилище и запускаем автоматическое сохранение
+	repo.InitStorage(ctx)
 
 	go func() {
 		<-ctx.Done()
