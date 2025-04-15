@@ -100,11 +100,6 @@ func (s *JSONStorage) SaveBatch(entities []models.Entity) error {
 		return nil
 	}
 
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-
-	s.dirtyFlag = true
-
 	// Группируем сущности по типу
 	var photos []models.Photo
 	var albums []models.Album
@@ -125,23 +120,37 @@ func (s *JSONStorage) SaveBatch(entities []models.Entity) error {
 
 	// Добавляем сущности в соответствующие слайсы
 	if len(photos) > 0 {
+		s.photosMutex.Lock()
 		s.photos = append(s.photos, photos...)
+		s.photosMutex.Unlock()
 		log.Printf("Добавлено %d фотографий", len(photos))
 	}
 
 	if len(albums) > 0 {
+		s.albumsMutex.Lock()
 		s.albums = append(s.albums, albums...)
+		s.albumsMutex.Unlock()
 		log.Printf("Добавлено %d альбомов", len(albums))
 	}
 
 	if len(tags) > 0 {
+		s.tagsMutex.Lock()
 		s.tags = append(s.tags, tags...)
+		s.tagsMutex.Unlock()
 		log.Printf("Добавлено %d тегов", len(tags))
 	}
 
-	// Проверяем, нужно ли сохранить данные
-	if time.Since(s.lastSaveTime) > s.saveInterval {
-		return s.persistData()
+	// Устанавливаем флаг и проверяем необходимость сохранения
+	// только если действительно были добавлены сущности
+	if len(photos) > 0 || len(albums) > 0 || len(tags) > 0 {
+		s.metaMutex.Lock()
+		s.dirtyFlag = true
+		needSave := time.Since(s.lastSaveTime) > s.saveInterval
+		s.metaMutex.Unlock()
+
+		if needSave {
+			return s.persistData()
+		}
 	}
 
 	return nil
