@@ -200,8 +200,15 @@ func (s *JSONStorage) Load() error {
 
 // Persist сохраняет текущее состояние в JSON-файлы
 func (s *JSONStorage) Persist() error {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
+	s.metaMutex.Lock()
+	s.photosMutex.Lock()
+	s.albumsMutex.Lock()
+	s.tagsMutex.Lock()
+
+	defer s.tagsMutex.Unlock()
+	defer s.albumsMutex.Unlock()
+	defer s.photosMutex.Unlock()
+	defer s.metaMutex.Unlock()
 
 	return s.persistData()
 }
@@ -279,8 +286,8 @@ func (s *JSONStorage) saveFile(filePath string, data interface{}) error {
 
 // GetPhotos возвращает копию всех фотографий
 func (s *JSONStorage) GetPhotos() []models.Photo {
-	s.mutex.RLock()
-	defer s.mutex.RUnlock()
+	s.photosMutex.RLock()
+	defer s.photosMutex.RUnlock()
 
 	result := make([]models.Photo, len(s.photos))
 	copy(result, s.photos)
@@ -289,8 +296,8 @@ func (s *JSONStorage) GetPhotos() []models.Photo {
 
 // GetAlbums возвращает копию всех альбомов
 func (s *JSONStorage) GetAlbums() []models.Album {
-	s.mutex.RLock()
-	defer s.mutex.RUnlock()
+	s.albumsMutex.RLock()
+	defer s.albumsMutex.RUnlock()
 
 	result := make([]models.Album, len(s.albums))
 	copy(result, s.albums)
@@ -299,8 +306,8 @@ func (s *JSONStorage) GetAlbums() []models.Album {
 
 // GetTags возвращает копию всех тегов
 func (s *JSONStorage) GetTags() []models.Tag {
-	s.mutex.RLock()
-	defer s.mutex.RUnlock()
+	s.tagsMutex.RLock()
+	defer s.tagsMutex.RUnlock()
 
 	result := make([]models.Tag, len(s.tags))
 	copy(result, s.tags)
@@ -309,8 +316,8 @@ func (s *JSONStorage) GetTags() []models.Tag {
 
 // GetNewPhotos возвращает новые фотографии с момента последнего вызова
 func (s *JSONStorage) GetNewPhotos() []models.Photo {
-	s.mutex.RLock()
-	defer s.mutex.RUnlock()
+	s.photosMutex.RLock()
+	defer s.photosMutex.RUnlock()
 
 	if s.lastPhotoIndex >= len(s.photos) {
 		return []models.Photo{}
@@ -324,8 +331,8 @@ func (s *JSONStorage) GetNewPhotos() []models.Photo {
 
 // GetNewAlbums возвращает новые альбомы с момента последнего вызова
 func (s *JSONStorage) GetNewAlbums() []models.Album {
-	s.mutex.RLock()
-	defer s.mutex.RUnlock()
+	s.albumsMutex.RLock()
+	defer s.albumsMutex.RUnlock()
 
 	if s.lastAlbumIndex >= len(s.albums) {
 		return []models.Album{}
@@ -339,8 +346,8 @@ func (s *JSONStorage) GetNewAlbums() []models.Album {
 
 // GetNewTags возвращает новые теги с момента последнего вызова
 func (s *JSONStorage) GetNewTags() []models.Tag {
-	s.mutex.RLock()
-	defer s.mutex.RUnlock()
+	s.tagsMutex.RLock()
+	defer s.tagsMutex.RUnlock()
 
 	if s.lastTagIndex >= len(s.tags) {
 		return []models.Tag{}
@@ -354,8 +361,13 @@ func (s *JSONStorage) GetNewTags() []models.Tag {
 
 // GetCounts возвращает количество сущностей каждого типа
 func (s *JSONStorage) GetCounts() (photosCount, albumsCount, tagsCount int) {
-	s.mutex.RLock()
-	defer s.mutex.RUnlock()
+	s.photosMutex.RLock()
+	s.albumsMutex.RLock()
+	s.tagsMutex.RLock()
+
+	defer s.tagsMutex.RUnlock()
+	defer s.albumsMutex.RUnlock()
+	defer s.photosMutex.RUnlock()
 
 	return len(s.photos), len(s.albums), len(s.tags)
 }
