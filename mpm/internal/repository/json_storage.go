@@ -134,6 +134,7 @@ func (s *JSONStorage) SaveBatch(entities []models.Entity) error {
 	if len(photos) > 0 {
 		s.photosMutex.Lock()
 		s.photos = append(s.photos, photos...)
+		s.photosModified = true
 		s.photosMutex.Unlock()
 		log.Printf("Добавлено %d фотографий", len(photos))
 	}
@@ -141,6 +142,7 @@ func (s *JSONStorage) SaveBatch(entities []models.Entity) error {
 	if len(albums) > 0 {
 		s.albumsMutex.Lock()
 		s.albums = append(s.albums, albums...)
+		s.albumsModified = true
 		s.albumsMutex.Unlock()
 		log.Printf("Добавлено %d альбомов", len(albums))
 	}
@@ -148,6 +150,7 @@ func (s *JSONStorage) SaveBatch(entities []models.Entity) error {
 	if len(tags) > 0 {
 		s.tagsMutex.Lock()
 		s.tags = append(s.tags, tags...)
+		s.tagsModified = true
 		s.tagsMutex.Unlock()
 		log.Printf("Добавлено %d тегов", len(tags))
 	}
