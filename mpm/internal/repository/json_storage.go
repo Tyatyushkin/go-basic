@@ -41,6 +41,10 @@ type JSONStorage struct {
 
 // NewJSONStorage создает новое хранилище с сохранением в JSON
 func NewJSONStorage(dataDir string, saveInterval time.Duration) *JSONStorage {
+	// Создаем директорию для данных при инициализации
+	if err := os.MkdirAll(dataDir, 0755); err != nil {
+		log.Printf("Предупреждение: не удалось создать директорию данных: %v", err)
+	}
 
 	return &JSONStorage{
 		dataDir:      dataDir,
@@ -325,8 +329,8 @@ func (s *JSONStorage) GetTags() []models.Tag {
 
 // GetNewPhotos возвращает новые фотографии с момента последнего вызова
 func (s *JSONStorage) GetNewPhotos() []models.Photo {
-	s.photosMutex.RLock()
-	defer s.photosMutex.RUnlock()
+	s.photosMutex.Lock()
+	defer s.photosMutex.Unlock()
 
 	if s.lastPhotoIndex >= len(s.photos) {
 		return []models.Photo{}
@@ -340,8 +344,8 @@ func (s *JSONStorage) GetNewPhotos() []models.Photo {
 
 // GetNewAlbums возвращает новые альбомы с момента последнего вызова
 func (s *JSONStorage) GetNewAlbums() []models.Album {
-	s.albumsMutex.RLock()
-	defer s.albumsMutex.RUnlock()
+	s.albumsMutex.Lock()
+	defer s.albumsMutex.Unlock()
 
 	if s.lastAlbumIndex >= len(s.albums) {
 		return []models.Album{}
@@ -355,8 +359,8 @@ func (s *JSONStorage) GetNewAlbums() []models.Album {
 
 // GetNewTags возвращает новые теги с момента последнего вызова
 func (s *JSONStorage) GetNewTags() []models.Tag {
-	s.tagsMutex.RLock()
-	defer s.tagsMutex.RUnlock()
+	s.tagsMutex.Lock()
+	defer s.tagsMutex.Unlock()
 
 	if s.lastTagIndex >= len(s.tags) {
 		return []models.Tag{}
