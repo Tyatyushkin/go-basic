@@ -14,8 +14,16 @@ import (
 
 // JSONStorage реализует интерфейс EntityStorage для временного хранения в JSON-файлах
 type JSONStorage struct {
-	dataDir      string        // Директория для хранения JSON-файлов
-	mutex        sync.RWMutex  // Мьютекс для защиты доступа к данным
+	dataDir string // Директория для хранения JSON-файлов
+
+	// Отдельные мьютексы для каждого типа данных
+	photosMutex sync.RWMutex // Мьютекс для доступа к фотографиям
+	albumsMutex sync.RWMutex // Мьютекс для доступа к альбомам
+	tagsMutex   sync.RWMutex // Мьютекс для доступа к тегам
+
+	// Общий мьютекс для метаданных (dirtyFlag, lastSaveTime)
+	metaMutex sync.RWMutex
+
 	dirtyFlag    bool          // Флаг наличия несохраненных изменений
 	lastSaveTime time.Time     // Время последнего сохранения
 	saveInterval time.Duration // Интервал между автоматическими сохранениями
@@ -46,23 +54,29 @@ func NewJSONStorage(dataDir string, saveInterval time.Duration) *JSONStorage {
 
 // Save Сохраняет одну сущность в JSON хранилище
 func (s *JSONStorage) Save(entity models.Entity) error {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-
+	// Сначала блокируем метаданные для изменения флага dirtyFlag
+	s.metaMutex.Lock()
 	s.dirtyFlag = true
+	s.metaMutex.Unlock()
 
 	// Определяем тип сущности и добавляем в соответствующий слайс
 	switch e := entity.(type) {
 	case models.Photo:
+		s.photosMutex.Lock()
 		s.photos = append(s.photos, e)
+		s.photosMutex.Unlock()
 		log.Printf("Добавлена фотография: ID=%d, Название=%s", e.ID, e.Name)
 
 	case models.Album:
+		s.albumsMutex.Lock()
 		s.albums = append(s.albums, e)
+		s.albumsMutex.Unlock()
 		log.Printf("Добавлен альбом: ID=%d, Название=%s", e.ID, e.Name)
 
 	case models.Tag:
+		s.tagsMutex.Lock()
 		s.tags = append(s.tags, e)
+		s.tagsMutex.Unlock()
 		log.Printf("Добавлен тег: ID=%d, Название=%s", e.ID, e.Name)
 
 	default:
@@ -70,7 +84,10 @@ func (s *JSONStorage) Save(entity models.Entity) error {
 	}
 
 	// Проверяем, нужно ли сохранить данные
-	if time.Since(s.lastSaveTime) > s.saveInterval {
+	s.metaMutex.RLock()
+	needSafe := time.Since(s.lastSaveTime) > s.saveInterval
+	s.metaMutex.RUnlock()
+	if needSafe {
 		return s.persistData()
 	}
 
@@ -132,8 +149,7 @@ func (s *JSONStorage) SaveBatch(entities []models.Entity) error {
 
 // Load загружает данные из JSON-файлов
 func (s *JSONStorage) Load() error {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
+	// TODO добавить мьютексы
 
 	// Убеждаемся, что директория существует
 	if err := os.MkdirAll(s.dataDir, 0755); err != nil {
@@ -142,7 +158,10 @@ func (s *JSONStorage) Load() error {
 
 	// Загружаем фотографии
 	photosPath := filepath.Join(s.dataDir, "photos.json")
-	if err := s.loadFile(photosPath, &s.photos); err != nil && !os.IsNotExist(err) {
+	s.photosMutex.Lock()
+	photosErr := s.loadFile(photosPath, &s.photos)
+	s.photosMutex.Unlock()
+	if photosErr != nil {
 		return fmt.Errorf("ошибка при загрузке фотографий: %v", err)
 	}
 
