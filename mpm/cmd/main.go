@@ -56,6 +56,8 @@ func main() {
 
 	// Создание обработчика для пользователей
 	userHandler := handlers.NewUserHandler(userStorage)
+	// Создание обработчика для альбомов
+	albumHandler := handlers.NewAlbumHandler(repo)
 
 	entityService := service.NewEntityService(repo)
 
@@ -93,6 +95,7 @@ func main() {
 
 	// Регистрация маршрутов
 	mux.HandleFunc("GET /api/users", userHandler.GetAllUsers)
+	mux.HandleFunc("POST /api/albums", albumHandler.CreateAlbum)
 
 	// Конфигурация сервера
 	server := &http.Server{
