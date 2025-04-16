@@ -20,3 +20,8 @@ func (h *AlbumHandler) CreateAlbum(w http.ResponseWriter, r *http.Request) {
 	log.Println("Получен запрос POST /api/albums")
 
 }
+
+func (h *AlbumHandler) UpdateAlbum(w http.ResponseWriter, r *http.Request) {
+	log.Println("Получен запрос PUT /api/albums/{id}")
+
+}

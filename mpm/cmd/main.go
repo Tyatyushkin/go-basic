@@ -96,6 +96,7 @@ func main() {
 	// Регистрация маршрутов
 	mux.HandleFunc("GET /api/users", userHandler.GetAllUsers)
 	mux.HandleFunc("POST /api/albums", albumHandler.CreateAlbum)
+	mux.HandleFunc("PUT /api/albums/{id}", albumHandler.UpdateAlbum)
 
 	// Конфигурация сервера
 	server := &http.Server{
