@@ -25,3 +25,15 @@ func (h *AlbumHandler) UpdateAlbum(w http.ResponseWriter, r *http.Request) {
 	log.Println("Получен запрос PUT /api/albums/{id}")
 
 }
+
+func (h *AlbumHandler) GetAllAlbums(w http.ResponseWriter, r *http.Request) {
+	log.Println("Получен запрос GET /api/albums")
+}
+
+func (h *AlbumHandler) GetAlbumByID(w http.ResponseWriter, r *http.Request) {
+	log.Println("Получен запрос GET /api/albums/{id}")
+}
+
+func (h *AlbumHandler) DeleteAlbum(w http.ResponseWriter, r *http.Request) {
+	log.Println("Получен запрос DELETE /api/albums/{id}")
+}
