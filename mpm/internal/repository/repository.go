@@ -74,15 +74,42 @@ func (r *Repository) GetAllPhotos() []models.Photo {
 	return []models.Photo{}
 }
 
-// GetAllAlbums возвращает все альбомы
+// GetAllAlbums возвращает все альбомы, исключая дубликаты по ID
 func (r *Repository) GetAllAlbums() []models.Album {
-	// Проверяем тип хранилища
-	if jsonStorage, ok := r.storage.(*JSONStorage); ok {
-		return jsonStorage.GetAlbums()
+	allAlbums := r.storage.GetAlbums()
+
+	// Используем map для исключения дубликатов по ID
+	uniqueAlbums := make(map[int]models.Album)
+
+	// Находим максимальный существующий ID
+	maxID := 0
+	for _, album := range allAlbums {
+		if album.ID > maxID {
+			maxID = album.ID
+		}
 	}
 
-	// В будущем здесь будут проверки других типов хранилищ
-	return []models.Album{}
+	// Генерируем новые ID для альбомов с ID=0 или дубликатами
+	nextID := maxID + 1
+	for _, album := range allAlbums {
+		a := album // создаем копию альбома
+
+		// Если ID=0 или такой ID уже есть, создаем новый ID
+		if a.ID == 0 || uniqueAlbums[a.ID].ID != 0 {
+			a.ID = nextID
+			nextID++
+		}
+
+		uniqueAlbums[a.ID] = a
+	}
+
+	// Преобразуем map обратно в slice
+	result := make([]models.Album, 0, len(uniqueAlbums))
+	for _, album := range uniqueAlbums {
+		result = append(result, album)
+	}
+
+	return result
 }
 
 // GetAllTags возвращает все теги
@@ -152,7 +179,7 @@ func (r *Repository) FindTagByID(id int) (models.Tag, error) {
 	return models.Tag{}, fmt.Errorf("тег с ID=%d не найден", id)
 }
 
-// AddAlbum добавляет новый альбом в хранилище
+// AddAlbum добавляет новый альбом с уникальным ID
 func (r *Repository) AddAlbum(album models.Album) (int, error) {
 	albums := r.GetAllAlbums()
 
@@ -164,25 +191,23 @@ func (r *Repository) AddAlbum(album models.Album) (int, error) {
 		}
 	}
 
-	// Устанавливаем ID
-	if album.ID <= 0 {
-		album.ID = maxID + 1
-	}
+	// Всегда генерируем новый ID, даже если в запросе был указан ID
+	album.ID = maxID + 1
 
-	// Устанавливаем дату создания, если она не установлена
+	// Устанавливаем дату создания
 	if album.CreatedAt.IsZero() {
 		album.CreatedAt = time.Now()
 	}
 
-	// Сохраняем альбом через общий метод для сущностей
-	if err := r.SaveEntity(album); err != nil {
-		return 0, fmt.Errorf("ошибка сохранения альбома: %w", err)
-	}
+	// Добавляем альбом к существующим
+	albums = append(albums, album)
 
-	// Для JSON хранилища нужно дополнительно обновить кэш альбомов
+	// Сохраняем обновленные данные
 	if jsonStorage, ok := r.storage.(*JSONStorage); ok {
+		jsonStorage.albums = albums
 		jsonStorage.albumsModified = true
 		jsonStorage.dirtyFlag = true
+		return album.ID, jsonStorage.Persist()
 	}
 
 	return album.ID, nil
