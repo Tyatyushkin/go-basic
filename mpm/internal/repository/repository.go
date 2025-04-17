@@ -188,6 +188,40 @@ func (r *Repository) AddAlbum(album models.Album) (int, error) {
 	return album.ID, nil
 }
 
+// UpdateAlbum обновляет данные альбома по ID
+func (r *Repository) UpdateAlbum(id int, updatedAlbum models.Album) error {
+	// Получаем текущий список альбомов
+	albums := r.GetAllAlbums()
+
+	// Флаг для проверки, найден ли альбом
+	found := false
+
+	// Обновляем данные альбома
+	for i, album := range albums {
+		if album.ID == id {
+			updatedAlbum.ID = id                     // Сохраняем ID
+			updatedAlbum.CreatedAt = album.CreatedAt // Сохраняем дату создания
+			albums[i] = updatedAlbum
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		return fmt.Errorf("альбом с ID=%d не найден", id)
+	}
+
+	// Сохраняем обновленный список альбомов
+	if jsonStorage, ok := r.storage.(*JSONStorage); ok {
+		jsonStorage.albums = albums
+		jsonStorage.albumsModified = true
+		jsonStorage.dirtyFlag = true
+		return jsonStorage.Persist()
+	}
+
+	return fmt.Errorf("обновление альбомов не поддерживается текущим хранилищем")
+}
+
 // Удалить альбом по ID
 func (r *Repository) DeleteAlbum(id int) error {
 	// Проверяем существование альбома

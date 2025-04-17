@@ -61,10 +61,54 @@ func (h *AlbumHandler) CreateAlbum(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Успешно создан альбом с ID=%d", newAlbum.ID)
 }
 
-//func (h *AlbumHandler) UpdateAlbum(w http.ResponseWriter, r *http.Request) {
-//	log.Println("Получен запрос PUT /api/albums/{id}")
-//
-//}
+func (h *AlbumHandler) UpdateAlbum(w http.ResponseWriter, r *http.Request) {
+	log.Println("Получен запрос PUT /api/albums/{id}")
+
+	// Извлекаем ID из пути запроса
+	var idStr string
+	idStr = r.URL.Query().Get("id")
+	if idStr == "" {
+		parts := splitPath(r.URL.Path)
+		if len(parts) > 0 {
+			idStr = parts[len(parts)-1]
+		}
+	}
+
+	if idStr == "" {
+		http.Error(w, "ID альбома не указан", http.StatusBadRequest)
+		return
+	}
+
+	// Преобразуем ID в целое число
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Некорректный ID альбома", http.StatusBadRequest)
+		return
+	}
+
+	// Декодируем тело запроса в структуру альбома
+	var updatedAlbum models.Album
+	if err := json.NewDecoder(r.Body).Decode(&updatedAlbum); err != nil {
+		log.Printf("Ошибка при декодировании JSON: %v", err)
+		http.Error(w, "Неверный формат данных", http.StatusBadRequest)
+		return
+	}
+
+	// Обновляем альбом через репозиторий
+	if err := h.repo.UpdateAlbum(id, updatedAlbum); err != nil {
+		if strings.Contains(err.Error(), "не найден") {
+			http.Error(w, "Альбом не найден", http.StatusNotFound)
+		} else {
+			log.Printf("Ошибка при обновлении альбома: %v", err)
+			http.Error(w, "Внутренняя ошибка сервера", http.StatusInternalServerError)
+		}
+		return
+	}
+
+	// Возвращаем успешный статус
+	w.WriteHeader(http.StatusOK)
+	log.Printf("Успешно обновлен альбом с ID=%d", id)
+}
 
 func (h *AlbumHandler) GetAllAlbums(w http.ResponseWriter, r *http.Request) {
 	log.Println("Получен запрос GET /api/albums")
