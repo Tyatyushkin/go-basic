@@ -98,7 +98,7 @@ func main() {
 	//mux.HandleFunc("POST /api/albums", albumHandler.CreateAlbum)
 	//mux.HandleFunc("PUT /api/albums/{id}", albumHandler.UpdateAlbum)
 	mux.HandleFunc("GET /api/albums", albumHandler.GetAllAlbums)
-	//mux.HandleFunc("GET /api/albums/{id}", albumHandler.GetAlbumByID)
+	mux.HandleFunc("GET /api/albums/{id}", albumHandler.GetAlbumByID)
 	//mux.HandleFunc("DELETE /api/albums/{id}", albumHandler.DeleteAlbum)
 
 	// Конфигурация сервера
