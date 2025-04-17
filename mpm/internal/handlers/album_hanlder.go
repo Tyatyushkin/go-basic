@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"log"
+	"mpm/internal/models"
 	"mpm/internal/repository"
 	"net/http"
 	"strconv"
@@ -19,10 +20,46 @@ func NewAlbumHandler(repo *repository.Repository) *AlbumHandler {
 	}
 }
 
-//func (h *AlbumHandler) CreateAlbum(w http.ResponseWriter, r *http.Request) {
-//	log.Println("Получен запрос POST /api/albums")
-//
-//}
+func (h *AlbumHandler) CreateAlbum(w http.ResponseWriter, r *http.Request) {
+	log.Println("Получен запрос POST /api/albums")
+
+	// Декодируем тело запроса в структуру альбома
+	var album models.Album
+	if err := json.NewDecoder(r.Body).Decode(&album); err != nil {
+		log.Printf("Ошибка при декодировании JSON: %v", err)
+		http.Error(w, "Неверный формат данных", http.StatusBadRequest)
+		return
+	}
+
+	// Добавление альбома через репозиторий
+	id, err := h.repo.AddAlbum(album)
+	if err != nil {
+		log.Printf("Ошибка при создании альбома: %v", err)
+		http.Error(w, "Ошибка при создании альбома", http.StatusInternalServerError)
+		return
+	}
+
+	// Получаем альбом с присвоенным ID
+	newAlbum, err := h.repo.FindAlbumByID(id)
+	if err != nil {
+		log.Printf("Ошибка при получении созданного альбома: %v", err)
+		http.Error(w, "Внутренняя ошибка сервера", http.StatusInternalServerError)
+		return
+	}
+
+	// Устанавливаем заголовок Content-Type и статус
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+
+	// Сериализуем созданный альбом в JSON и отправляем клиенту
+	if err := json.NewEncoder(w).Encode(newAlbum); err != nil {
+		log.Printf("Ошибка при сериализации альбома: %v", err)
+		http.Error(w, "Внутренняя ошибка сервера", http.StatusInternalServerError)
+		return
+	}
+
+	log.Printf("Успешно создан альбом с ID=%d", newAlbum.ID)
+}
 
 //func (h *AlbumHandler) UpdateAlbum(w http.ResponseWriter, r *http.Request) {
 //	log.Println("Получен запрос PUT /api/albums/{id}")

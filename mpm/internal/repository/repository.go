@@ -151,3 +151,33 @@ func (r *Repository) FindTagByID(id int) (models.Tag, error) {
 	}
 	return models.Tag{}, fmt.Errorf("тег с ID=%d не найден", id)
 }
+
+// AddAlbum добавляет новый альбом в хранилище
+func (r *Repository) AddAlbum(album models.Album) (int, error) {
+	albums := r.GetAllAlbums()
+
+	// Находим максимальный ID
+	maxID := 0
+	for _, a := range albums {
+		if a.ID > maxID {
+			maxID = a.ID
+		}
+	}
+
+	// Устанавливаем ID
+	if album.ID <= 0 {
+		album.ID = maxID + 1
+	}
+
+	// Добавляем в коллекцию
+	albums = append(albums, album)
+
+	// Сохраняем обновленную коллекцию
+	if jsonStorage, ok := r.storage.(*JSONStorage); ok {
+		if err := jsonStorage.SaveAlbums(albums); err != nil {
+			return 0, err
+		}
+	}
+
+	return album.ID, nil
+}
