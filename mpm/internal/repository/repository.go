@@ -187,3 +187,36 @@ func (r *Repository) AddAlbum(album models.Album) (int, error) {
 
 	return album.ID, nil
 }
+
+// Удалить альбом по ID
+func (r *Repository) DeleteAlbum(id int) error {
+	// Проверяем существование альбома
+	_, err := r.FindAlbumByID(id)
+	if err != nil {
+		return err // Возвращаем ошибку, если альбом не найден
+	}
+
+	// Получаем текущий список альбомов
+	albums := r.GetAllAlbums()
+
+	// Создаем новый слайс без удаляемого альбома
+	newAlbums := make([]models.Album, 0, len(albums))
+	for _, album := range albums {
+		if album.ID != id {
+			newAlbums = append(newAlbums, album)
+		}
+	}
+
+	// Обновляем состояние в JSON-хранилище
+	if jsonStorage, ok := r.storage.(*JSONStorage); ok {
+		// Обновляем кэш альбомов и флаги
+		jsonStorage.albums = newAlbums
+		jsonStorage.albumsModified = true
+		jsonStorage.dirtyFlag = true
+
+		// Сохраняем изменения на диск
+		return jsonStorage.Persist()
+	}
+
+	return fmt.Errorf("удаление альбомов не поддерживается текущим хранилищем")
+}

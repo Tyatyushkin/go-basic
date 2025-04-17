@@ -147,6 +147,48 @@ func splitPath(path string) []string {
 	return parts
 }
 
-//func (h *AlbumHandler) DeleteAlbum(w http.ResponseWriter, r *http.Request) {
-//	log.Println("Получен запрос DELETE /api/albums/{id}")
-//}
+func (h *AlbumHandler) DeleteAlbum(w http.ResponseWriter, r *http.Request) {
+	log.Println("Получен запрос DELETE /api/albums/{id}")
+
+	// Извлекаем ID из пути запроса
+	var idStr string
+
+	// Пробуем получить из параметра запроса
+	idStr = r.URL.Query().Get("id")
+
+	// Если ID нет в параметрах, пробуем извлечь из пути
+	if idStr == "" {
+		parts := splitPath(r.URL.Path)
+		if len(parts) > 0 {
+			idStr = parts[len(parts)-1]
+		}
+	}
+
+	if idStr == "" {
+		http.Error(w, "ID альбома не указан", http.StatusBadRequest)
+		return
+	}
+
+	// Преобразуем ID в целое число
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Некорректный ID альбома", http.StatusBadRequest)
+		return
+	}
+
+	// Удаляем альбом из репозитория
+	err = h.repo.DeleteAlbum(id)
+	if err != nil {
+		if strings.Contains(err.Error(), "не найден") {
+			http.Error(w, "Альбом не найден", http.StatusNotFound)
+		} else {
+			log.Printf("Ошибка при удалении альбома: %v", err)
+			http.Error(w, "Внутренняя ошибка сервера", http.StatusInternalServerError)
+		}
+		return
+	}
+
+	// Возвращаем успешный статус без тела ответа
+	w.WriteHeader(http.StatusNoContent)
+	log.Printf("Успешно удален альбом с ID=%d", id)
+}
