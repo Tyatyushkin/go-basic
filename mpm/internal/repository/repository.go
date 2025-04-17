@@ -76,7 +76,14 @@ func (r *Repository) GetAllPhotos() []models.Photo {
 
 // GetAllAlbums возвращает все альбомы, исключая дубликаты по ID
 func (r *Repository) GetAllAlbums() []models.Album {
-	allAlbums := r.storage.GetAlbums()
+	var allAlbums []models.Album
+
+	// Проверяем тип хранилища и получаем альбомы
+	if jsonStorage, ok := r.storage.(*JSONStorage); ok {
+		allAlbums = jsonStorage.GetAlbums()
+	} else {
+		return []models.Album{} // Возвращаем пустой слайс для других типов хранилищ
+	}
 
 	// Используем map для исключения дубликатов по ID
 	uniqueAlbums := make(map[int]models.Album)
@@ -94,8 +101,9 @@ func (r *Repository) GetAllAlbums() []models.Album {
 	for _, album := range allAlbums {
 		a := album // создаем копию альбома
 
-		// Если ID=0 или такой ID уже есть, создаем новый ID
-		if a.ID == 0 || uniqueAlbums[a.ID].ID != 0 {
+		// Если ID=0 или такой ID уже есть в мапе и это не пустой альбом
+		existingAlbum, exists := uniqueAlbums[a.ID]
+		if a.ID == 0 || (exists && existingAlbum.ID != 0) {
 			a.ID = nextID
 			nextID++
 		}
