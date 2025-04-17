@@ -169,14 +169,20 @@ func (r *Repository) AddAlbum(album models.Album) (int, error) {
 		album.ID = maxID + 1
 	}
 
-	// Добавляем в коллекцию
-	albums = append(albums, album)
+	// Устанавливаем дату создания, если она не установлена
+	if album.CreatedAt.IsZero() {
+		album.CreatedAt = time.Now()
+	}
 
-	// Сохраняем обновленную коллекцию
+	// Сохраняем альбом через общий метод для сущностей
+	if err := r.SaveEntity(album); err != nil {
+		return 0, fmt.Errorf("ошибка сохранения альбома: %w", err)
+	}
+
+	// Для JSON хранилища нужно дополнительно обновить кэш альбомов
 	if jsonStorage, ok := r.storage.(*JSONStorage); ok {
-		if err := jsonStorage.SaveAlbums(albums); err != nil {
-			return 0, err
-		}
+		jsonStorage.albumsModified = true
+		jsonStorage.dirtyFlag = true
 	}
 
 	return album.ID, nil
