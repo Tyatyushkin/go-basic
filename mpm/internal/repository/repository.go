@@ -106,7 +106,7 @@ func (r *Repository) GetAllAlbums() []models.Album {
 	processedAlbums := []models.Album{}
 	if defaultAlbum != nil {
 		// Убедимся, что дефолтный альбом имеет ID = 1
-		defaultAlbum.ID = 1
+		defaultAlbum.ID = 0
 		processedAlbums = append(processedAlbums, *defaultAlbum)
 	}
 
@@ -117,7 +117,7 @@ func (r *Repository) GetAllAlbums() []models.Album {
 	uniqueAlbums := make(map[int]models.Album)
 
 	// Находим максимальный существующий ID
-	maxID := 1 // Начинаем с 1, так как дефолтный альбом имеет ID=1
+	maxID := 0 // Начинаем с 1, так как дефолтный альбом имеет ID=1
 	for _, album := range processedAlbums {
 		if album.ID > maxID {
 			maxID = album.ID
