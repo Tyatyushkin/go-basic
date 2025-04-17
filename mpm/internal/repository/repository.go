@@ -74,7 +74,7 @@ func (r *Repository) GetAllPhotos() []models.Photo {
 	return []models.Photo{}
 }
 
-// GetAllAlbums возвращает все альбомы, исключая дубликаты по ID и оставляя только один дефолтный альбом
+// GetAllAlbums возвращает все альбомы, исключая дубликаты и оставляя только один дефолтный альбом
 func (r *Repository) GetAllAlbums() []models.Album {
 	var allAlbums []models.Album
 
@@ -92,8 +92,8 @@ func (r *Repository) GetAllAlbums() []models.Album {
 	// Разделяем дефолтные и обычные альбомы
 	for _, album := range allAlbums {
 		if album.Name == "Default" && album.Description == "Альбом по умолчанию для всех фотографий" {
-			// Сохраняем только первый найденный дефолтный альбом или с ненулевым ID
-			if defaultAlbum == nil || (defaultAlbum.ID == 0 && album.ID > 0) {
+			// Сохраняем только первый найденный дефолтный альбом
+			if defaultAlbum == nil {
 				copyAlbum := album
 				defaultAlbum = &copyAlbum
 			}
@@ -105,7 +105,7 @@ func (r *Repository) GetAllAlbums() []models.Album {
 	// Добавляем дефолтный альбом, если он был найден
 	processedAlbums := []models.Album{}
 	if defaultAlbum != nil {
-		// Убедимся, что дефолтный альбом имеет ID = 1
+		// Устанавливаем ID дефолтного альбома равным 0
 		defaultAlbum.ID = 0
 		processedAlbums = append(processedAlbums, *defaultAlbum)
 	}
@@ -117,19 +117,28 @@ func (r *Repository) GetAllAlbums() []models.Album {
 	uniqueAlbums := make(map[int]models.Album)
 
 	// Находим максимальный существующий ID
-	maxID := 0 // Начинаем с 1, так как дефолтный альбом имеет ID=1
+	maxID := 0
 	for _, album := range processedAlbums {
+		// Пропускаем дефолтный альбом при поиске максимального ID
+		if album.ID == 0 && album.Name == "Default" {
+			continue
+		}
+
 		if album.ID > maxID {
 			maxID = album.ID
 		}
 	}
 
+	// Добавляем дефолтный альбом в map
+	if defaultAlbum != nil {
+		uniqueAlbums[0] = *defaultAlbum
+	}
+
 	// Генерируем новые ID для альбомов с дублирующимися ID
 	nextID := maxID + 1
 	for _, album := range processedAlbums {
-		// Пропускаем дефолтный альбом, который уже имеет ID=1
-		if album.Name == "Default" && album.Description == "Альбом по умолчанию для всех фотографий" && album.ID == 1 {
-			uniqueAlbums[1] = album
+		// Пропускаем дефолтный альбом, который уже добавлен
+		if album.ID == 0 && album.Name == "Default" {
 			continue
 		}
 
