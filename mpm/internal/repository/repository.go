@@ -74,36 +74,67 @@ func (r *Repository) GetAllPhotos() []models.Photo {
 	return []models.Photo{}
 }
 
-// GetAllAlbums возвращает все альбомы, исключая дубликаты по ID
+// GetAllAlbums возвращает все альбомы, исключая дубликаты по ID и оставляя только один дефолтный альбом
 func (r *Repository) GetAllAlbums() []models.Album {
 	var allAlbums []models.Album
 
-	// Проверяем тип хранилища и получаем альбомы
+	// Получаем альбомы из хранилища
 	if jsonStorage, ok := r.storage.(*JSONStorage); ok {
 		allAlbums = jsonStorage.GetAlbums()
 	} else {
-		return []models.Album{} // Возвращаем пустой слайс для других типов хранилищ
+		return []models.Album{}
 	}
 
-	// Используем map для исключения дубликатов по ID
+	// Отдельно обрабатываем дефолтные альбомы
+	var defaultAlbum *models.Album
+	var otherAlbums []models.Album
+
+	// Разделяем дефолтные и обычные альбомы
+	for _, album := range allAlbums {
+		if album.Name == "Default" && album.Description == "Альбом по умолчанию для всех фотографий" {
+			// Сохраняем только первый найденный дефолтный альбом или с ненулевым ID
+			if defaultAlbum == nil || (defaultAlbum.ID == 0 && album.ID > 0) {
+				copyAlbum := album
+				defaultAlbum = &copyAlbum
+			}
+		} else {
+			otherAlbums = append(otherAlbums, album)
+		}
+	}
+
+	// Добавляем дефолтный альбом, если он был найден
+	processedAlbums := []models.Album{}
+	if defaultAlbum != nil {
+		// Убедимся, что дефолтный альбом имеет ID = 1
+		defaultAlbum.ID = 1
+		processedAlbums = append(processedAlbums, *defaultAlbum)
+	}
+
+	// Добавляем остальные альбомы
+	processedAlbums = append(processedAlbums, otherAlbums...)
+
+	// Обрабатываем все альбомы для исключения дубликатов по ID
 	uniqueAlbums := make(map[int]models.Album)
 
 	// Находим максимальный существующий ID
-	maxID := 0
-	for _, album := range allAlbums {
+	maxID := 1 // Начинаем с 1, так как дефолтный альбом имеет ID=1
+	for _, album := range processedAlbums {
 		if album.ID > maxID {
 			maxID = album.ID
 		}
 	}
 
-	// Генерируем новые ID для альбомов с ID=0 или дубликатами
+	// Генерируем новые ID для альбомов с дублирующимися ID
 	nextID := maxID + 1
-	for _, album := range allAlbums {
-		a := album // создаем копию альбома
+	for _, album := range processedAlbums {
+		// Пропускаем дефолтный альбом, который уже имеет ID=1
+		if album.Name == "Default" && album.Description == "Альбом по умолчанию для всех фотографий" && album.ID == 1 {
+			uniqueAlbums[1] = album
+			continue
+		}
 
-		// Если ID=0 или такой ID уже есть в мапе и это не пустой альбом
-		existingAlbum, exists := uniqueAlbums[a.ID]
-		if a.ID == 0 || (exists && existingAlbum.ID != 0) {
+		a := album
+		if a.ID == 0 || uniqueAlbums[a.ID].ID != 0 {
 			a.ID = nextID
 			nextID++
 		}
@@ -115,6 +146,14 @@ func (r *Repository) GetAllAlbums() []models.Album {
 	result := make([]models.Album, 0, len(uniqueAlbums))
 	for _, album := range uniqueAlbums {
 		result = append(result, album)
+	}
+
+	// Обновляем хранилище, чтобы исправления сохранились
+	if jsonStorage, ok := r.storage.(*JSONStorage); ok {
+		jsonStorage.albums = result
+		jsonStorage.albumsModified = true
+		jsonStorage.dirtyFlag = true
+		jsonStorage.Persist()
 	}
 
 	return result
