@@ -79,7 +79,6 @@ func (r *Repository) GetAllAlbums(ctx context.Context) ([]models.Album, error) {
 	// Проверяем отмену контекста
 	select {
 	case <-ctx.Done():
-
 		return nil, ctx.Err()
 	default:
 
@@ -349,7 +348,7 @@ func (r *Repository) UpdateAlbum(ctx context.Context, id int, updatedAlbum model
 	return fmt.Errorf("обновление альбомов не поддерживается текущим хранилищем")
 }
 
-// Удалить альбом по ID
+// DeleteAlbum Удалить альбом по ID
 func (r *Repository) DeleteAlbum(ctx context.Context, id int) error {
 	// Проверяем отмену контекста
 	select {
