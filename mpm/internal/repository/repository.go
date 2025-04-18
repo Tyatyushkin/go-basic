@@ -323,7 +323,15 @@ func (r *Repository) UpdateAlbum(id int, updatedAlbum models.Album) error {
 }
 
 // Удалить альбом по ID
-func (r *Repository) DeleteAlbum(id int) error {
+func (r *Repository) DeleteAlbum(ctx context.Context, id int) error {
+	// Проверяем отмену контекста
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+		// Продолжаем выполнение
+	}
+
 	// Проверяем существование альбома
 	_, err := r.FindAlbumByID(id)
 	if err != nil {
@@ -331,9 +339,9 @@ func (r *Repository) DeleteAlbum(id int) error {
 	}
 
 	// Получаем текущий список альбомов
-	albums, err, _ := r.GetAllAlbums(context.Background())
+	albums, err := r.GetAllAlbums(ctx)
 	if err != nil {
-		return models.Album{}, err
+		return err
 	}
 
 	// Создаем новый слайс без удаляемого альбома
