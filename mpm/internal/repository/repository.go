@@ -75,14 +75,23 @@ func (r *Repository) GetAllPhotos() []models.Photo {
 }
 
 // GetAllAlbums возвращает все альбомы, исключая дубликаты и оставляя только один дефолтный альбом
-func (r *Repository) GetAllAlbums() []models.Album {
+func (r *Repository) GetAllAlbums(ctx context.Context) ([]models.Album, error) {
+	// Проверяем отмену контекста
+	select {
+	case <-ctx.Done():
+
+		return nil, ctx.Err()
+	default:
+
+	}
+
 	var allAlbums []models.Album
 
 	// Получаем альбомы из хранилища
 	if jsonStorage, ok := r.storage.(*JSONStorage); ok {
 		allAlbums = jsonStorage.GetAlbums()
 	} else {
-		return []models.Album{}
+		return []models.Album{}, nil
 	}
 
 	// Отдельно обрабатываем дефолтные альбомы
@@ -165,7 +174,7 @@ func (r *Repository) GetAllAlbums() []models.Album {
 		jsonStorage.Persist()
 	}
 
-	return result
+	return result, nil
 }
 
 // GetAllTags возвращает все теги

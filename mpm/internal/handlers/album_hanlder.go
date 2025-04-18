@@ -113,8 +113,15 @@ func (h *AlbumHandler) UpdateAlbum(w http.ResponseWriter, r *http.Request) {
 func (h *AlbumHandler) GetAllAlbums(w http.ResponseWriter, r *http.Request) {
 	log.Println("Получен запрос GET /api/albums")
 
+	// Получаем контекст из запроса
+	ctx := r.Context()
+
 	// Получаем все альбомы из репозитория
-	albums := h.repo.GetAllAlbums()
+	albums, err := h.repo.GetAllAlbums(ctx)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Ошибка при получении альбомов: %v", err), http.StatusInternalServerError)
+		return
+	}
 
 	// Устанавливаем заголовок Content-Type
 	w.Header().Set("Content-Type", "application/json")
