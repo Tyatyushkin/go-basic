@@ -250,7 +250,10 @@ func (r *Repository) FindTagByID(id int) (models.Tag, error) {
 
 // AddAlbum добавляет новый альбом с уникальным ID
 func (r *Repository) AddAlbum(album models.Album) (int, error) {
-	albums := r.GetAllAlbums()
+	albums, err := r.GetAllAlbums(context.Background())
+	if err != nil {
+		return models.Album{}, err
+	}
 
 	// Находим максимальный ID
 	maxID := 0
@@ -285,7 +288,10 @@ func (r *Repository) AddAlbum(album models.Album) (int, error) {
 // UpdateAlbum обновляет данные альбома по ID
 func (r *Repository) UpdateAlbum(id int, updatedAlbum models.Album) error {
 	// Получаем текущий список альбомов
-	albums := r.GetAllAlbums()
+	albums, err := r.GetAllAlbums(context.Background())
+	if err != nil {
+		return models.Album{}, err
+	}
 
 	// Флаг для проверки, найден ли альбом
 	found := false
@@ -325,7 +331,10 @@ func (r *Repository) DeleteAlbum(id int) error {
 	}
 
 	// Получаем текущий список альбомов
-	albums := r.GetAllAlbums()
+	albums, err, _ := r.GetAllAlbums(context.Background())
+	if err != nil {
+		return models.Album{}, err
+	}
 
 	// Создаем новый слайс без удаляемого альбома
 	newAlbums := make([]models.Album, 0, len(albums))
