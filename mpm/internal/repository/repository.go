@@ -302,11 +302,19 @@ func (r *Repository) AddAlbum(ctx context.Context, album models.Album) (int, err
 }
 
 // UpdateAlbum обновляет данные альбома по ID
-func (r *Repository) UpdateAlbum(id int, updatedAlbum models.Album) error {
+func (r *Repository) UpdateAlbum(ctx context.Context, id int, updatedAlbum models.Album) error {
+	// Проверяем отмену контекста
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+		// Продолжаем выполнение
+	}
+
 	// Получаем текущий список альбомов
-	albums, err := r.GetAllAlbums(context.Background())
+	albums, err := r.GetAllAlbums(ctx)
 	if err != nil {
-		return models.Album{}, err
+		return err // Исправлено: возвращаем только ошибку
 	}
 
 	// Флаг для проверки, найден ли альбом
@@ -348,10 +356,10 @@ func (r *Repository) DeleteAlbum(ctx context.Context, id int) error {
 		// Продолжаем выполнение
 	}
 
-	// Проверяем существование альбома
-	_, err := r.FindAlbumByID(id)
+	// Проверяем существование альбома - исправлено передачей контекста
+	_, err := r.FindAlbumByID(ctx, id)
 	if err != nil {
-		return err // Возвращаем ошибку, если альбом не найден
+		return err
 	}
 
 	// Получаем текущий список альбомов
