@@ -171,7 +171,10 @@ func (r *Repository) GetAllAlbums(ctx context.Context) ([]models.Album, error) {
 		jsonStorage.albums = result
 		jsonStorage.albumsModified = true
 		jsonStorage.dirtyFlag = true
-		jsonStorage.Persist()
+		err := jsonStorage.Persist()
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return result, nil
