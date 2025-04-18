@@ -224,7 +224,11 @@ func (r *Repository) FindPhotoByID(id int) (models.Photo, error) {
 
 // FindAlbumByID находит альбом по ID
 func (r *Repository) FindAlbumByID(id int) (models.Album, error) {
-	albums := r.GetAllAlbums()
+	albums, err := r.GetAllAlbums(context.Background())
+	if err != nil {
+		return models.Album{}, err
+	}
+
 	for _, album := range albums {
 		if album.ID == id {
 			return album, nil
