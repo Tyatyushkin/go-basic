@@ -23,6 +23,9 @@ func NewAlbumHandler(repo *repository.Repository) *AlbumHandler {
 func (h *AlbumHandler) CreateAlbum(w http.ResponseWriter, r *http.Request) {
 	log.Println("Получен запрос POST /api/albums")
 
+	// Получаем контекст из запроса
+	ctx := r.Context()
+
 	// Декодируем тело запроса в структуру альбома
 	var album models.Album
 	if err := json.NewDecoder(r.Body).Decode(&album); err != nil {
@@ -32,7 +35,7 @@ func (h *AlbumHandler) CreateAlbum(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Добавление альбома через репозиторий
-	id, err := h.repo.AddAlbum(album)
+	id, err := h.repo.AddAlbum(ctx, album)
 	if err != nil {
 		log.Printf("Ошибка при создании альбома: %v", err)
 		http.Error(w, "Ошибка при создании альбома", http.StatusInternalServerError)
@@ -40,7 +43,7 @@ func (h *AlbumHandler) CreateAlbum(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Получаем альбом с присвоенным ID
-	newAlbum, err := h.repo.FindAlbumByID(id)
+	newAlbum, err := h.repo.FindAlbumByID(ctx, id)
 	if err != nil {
 		log.Printf("Ошибка при получении созданного альбома: %v", err)
 		http.Error(w, "Внутренняя ошибка сервера", http.StatusInternalServerError)
@@ -63,6 +66,9 @@ func (h *AlbumHandler) CreateAlbum(w http.ResponseWriter, r *http.Request) {
 
 func (h *AlbumHandler) UpdateAlbum(w http.ResponseWriter, r *http.Request) {
 	log.Println("Получен запрос PUT /api/albums/{id}")
+
+	// Получаем контекст из запроса
+	ctx := r.Context()
 
 	// Извлекаем ID из пути запроса
 	var idStr string
@@ -95,7 +101,7 @@ func (h *AlbumHandler) UpdateAlbum(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Обновляем альбом через репозиторий
-	if err := h.repo.UpdateAlbum(id, updatedAlbum); err != nil {
+	if err := h.repo.UpdateAlbum(ctx, id, updatedAlbum); err != nil {
 		if strings.Contains(err.Error(), "не найден") {
 			http.Error(w, "Альбом не найден", http.StatusNotFound)
 		} else {
@@ -119,7 +125,7 @@ func (h *AlbumHandler) GetAllAlbums(w http.ResponseWriter, r *http.Request) {
 	// Получаем все альбомы из репозитория
 	albums, err := h.repo.GetAllAlbums(ctx)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Ошибка при получении альбомов: %v", err), http.StatusInternalServerError)
+		http.Error(w, fmt.Printf("Ошибка при получении альбомов: %v", err), http.StatusInternalServerError)
 		return
 	}
 
@@ -139,6 +145,9 @@ func (h *AlbumHandler) GetAllAlbums(w http.ResponseWriter, r *http.Request) {
 
 func (h *AlbumHandler) GetAlbumByID(w http.ResponseWriter, r *http.Request) {
 	log.Println("Получен запрос GET /api/albums/{id}")
+
+	// Получаем контекст из запроса
+	ctx := r.Context()
 
 	// Извлекаем ID из пути запроса
 	// Предполагаем, что ID передается как последний сегмент пути или как параметр запроса
@@ -168,7 +177,7 @@ func (h *AlbumHandler) GetAlbumByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Ищем альбом в репозитории
-	album, err := h.repo.FindAlbumByID(id)
+	album, err := h.repo.FindAlbumByID(ctx, id)
 	if err != nil {
 		http.Error(w, "Альбом не найден", http.StatusNotFound)
 		return
@@ -201,6 +210,9 @@ func splitPath(path string) []string {
 func (h *AlbumHandler) DeleteAlbum(w http.ResponseWriter, r *http.Request) {
 	log.Println("Получен запрос DELETE /api/albums/{id}")
 
+	// Получаем контекст из запроса
+	ctx := r.Context()
+
 	// Извлекаем ID из пути запроса
 	var idStr string
 
@@ -228,7 +240,7 @@ func (h *AlbumHandler) DeleteAlbum(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Удаляем альбом из репозитория
-	err = h.repo.DeleteAlbum(id)
+	err = h.repo.DeleteAlbum(ctx, id)
 	if err != nil {
 		if strings.Contains(err.Error(), "не найден") {
 			http.Error(w, "Альбом не найден", http.StatusNotFound)
