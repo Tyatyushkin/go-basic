@@ -125,7 +125,8 @@ func (h *AlbumHandler) GetAllAlbums(w http.ResponseWriter, r *http.Request) {
 	// Получаем все альбомы из репозитория
 	albums, err := h.repo.GetAllAlbums(ctx)
 	if err != nil {
-		http.Error(w, fmt.Printf("Ошибка при получении альбомов: %v", err), http.StatusInternalServerError)
+		log.Printf("Ошибка при получении альбомов: %v", err)
+		http.Error(w, "Внутренняя ошибка сервера", http.StatusInternalServerError)
 		return
 	}
 
