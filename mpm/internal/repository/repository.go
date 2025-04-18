@@ -223,8 +223,16 @@ func (r *Repository) FindPhotoByID(id int) (models.Photo, error) {
 }
 
 // FindAlbumByID находит альбом по ID
-func (r *Repository) FindAlbumByID(id int) (models.Album, error) {
-	albums, err := r.GetAllAlbums(context.Background())
+func (r *Repository) FindAlbumByID(ctx context.Context, id int) (models.Album, error) {
+	// Проверяем отмену контекста
+	select {
+	case <-ctx.Done():
+		return models.Album{}, ctx.Err()
+	default:
+		// Продолжаем выполнение
+	}
+
+	albums, err := r.GetAllAlbums(ctx)
 	if err != nil {
 		return models.Album{}, err
 	}
@@ -249,10 +257,18 @@ func (r *Repository) FindTagByID(id int) (models.Tag, error) {
 }
 
 // AddAlbum добавляет новый альбом с уникальным ID
-func (r *Repository) AddAlbum(album models.Album) (int, error) {
-	albums, err := r.GetAllAlbums(context.Background())
+func (r *Repository) AddAlbum(ctx context.Context, album models.Album) (int, error) {
+	// Проверяем отмену контекста
+	select {
+	case <-ctx.Done():
+		return 0, ctx.Err()
+	default:
+		// Продолжаем выполнение
+	}
+
+	albums, err := r.GetAllAlbums(ctx)
 	if err != nil {
-		return models.Album{}, err
+		return 0, err
 	}
 
 	// Находим максимальный ID
