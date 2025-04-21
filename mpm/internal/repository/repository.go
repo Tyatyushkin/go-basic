@@ -74,15 +74,109 @@ func (r *Repository) GetAllPhotos() []models.Photo {
 	return []models.Photo{}
 }
 
-// GetAllAlbums возвращает все альбомы
-func (r *Repository) GetAllAlbums() []models.Album {
-	// Проверяем тип хранилища
-	if jsonStorage, ok := r.storage.(*JSONStorage); ok {
-		return jsonStorage.GetAlbums()
+// GetAllAlbums возвращает все альбомы, исключая дубликаты и оставляя только один дефолтный альбом
+func (r *Repository) GetAllAlbums(ctx context.Context) ([]models.Album, error) {
+	// Проверяем отмену контекста
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	default:
+
 	}
 
-	// В будущем здесь будут проверки других типов хранилищ
-	return []models.Album{}
+	var allAlbums []models.Album
+
+	// Получаем альбомы из хранилища
+	if jsonStorage, ok := r.storage.(*JSONStorage); ok {
+		allAlbums = jsonStorage.GetAlbums()
+	} else {
+		return []models.Album{}, nil
+	}
+
+	// Отдельно обрабатываем дефолтные альбомы
+	var defaultAlbum *models.Album
+	var otherAlbums []models.Album
+
+	// Разделяем дефолтные и обычные альбомы
+	for _, album := range allAlbums {
+		if album.Name == "Default" && album.Description == "Альбом по умолчанию для всех фотографий" {
+			// Сохраняем только первый найденный дефолтный альбом
+			if defaultAlbum == nil {
+				copyAlbum := album
+				defaultAlbum = &copyAlbum
+			}
+		} else {
+			otherAlbums = append(otherAlbums, album)
+		}
+	}
+
+	// Добавляем дефолтный альбом, если он был найден
+	processedAlbums := []models.Album{}
+	if defaultAlbum != nil {
+		// Устанавливаем ID дефолтного альбома равным 0
+		defaultAlbum.ID = 0
+		processedAlbums = append(processedAlbums, *defaultAlbum)
+	}
+
+	// Добавляем остальные альбомы
+	processedAlbums = append(processedAlbums, otherAlbums...)
+
+	// Обрабатываем все альбомы для исключения дубликатов по ID
+	uniqueAlbums := make(map[int]models.Album)
+
+	// Находим максимальный существующий ID
+	maxID := 0
+	for _, album := range processedAlbums {
+		// Пропускаем дефолтный альбом при поиске максимального ID
+		if album.ID == 0 && album.Name == "Default" {
+			continue
+		}
+
+		if album.ID > maxID {
+			maxID = album.ID
+		}
+	}
+
+	// Добавляем дефолтный альбом в map
+	if defaultAlbum != nil {
+		uniqueAlbums[0] = *defaultAlbum
+	}
+
+	// Генерируем новые ID для альбомов с дублирующимися ID
+	nextID := maxID + 1
+	for _, album := range processedAlbums {
+		// Пропускаем дефолтный альбом, который уже добавлен
+		if album.ID == 0 && album.Name == "Default" {
+			continue
+		}
+
+		a := album
+		if a.ID == 0 || uniqueAlbums[a.ID].ID != 0 {
+			a.ID = nextID
+			nextID++
+		}
+
+		uniqueAlbums[a.ID] = a
+	}
+
+	// Преобразуем map обратно в slice
+	result := make([]models.Album, 0, len(uniqueAlbums))
+	for _, album := range uniqueAlbums {
+		result = append(result, album)
+	}
+
+	// Обновляем хранилище, чтобы исправления сохранились
+	if jsonStorage, ok := r.storage.(*JSONStorage); ok {
+		jsonStorage.albums = result
+		jsonStorage.albumsModified = true
+		jsonStorage.dirtyFlag = true
+		err := jsonStorage.Persist()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return result, nil
 }
 
 // GetAllTags возвращает все теги
@@ -131,8 +225,20 @@ func (r *Repository) FindPhotoByID(id int) (models.Photo, error) {
 }
 
 // FindAlbumByID находит альбом по ID
-func (r *Repository) FindAlbumByID(id int) (models.Album, error) {
-	albums := r.GetAllAlbums()
+func (r *Repository) FindAlbumByID(ctx context.Context, id int) (models.Album, error) {
+	// Проверяем отмену контекста
+	select {
+	case <-ctx.Done():
+		return models.Album{}, ctx.Err()
+	default:
+		// Продолжаем выполнение
+	}
+
+	albums, err := r.GetAllAlbums(ctx)
+	if err != nil {
+		return models.Album{}, err
+	}
+
 	for _, album := range albums {
 		if album.ID == id {
 			return album, nil
@@ -150,4 +256,138 @@ func (r *Repository) FindTagByID(id int) (models.Tag, error) {
 		}
 	}
 	return models.Tag{}, fmt.Errorf("тег с ID=%d не найден", id)
+}
+
+// AddAlbum добавляет новый альбом с уникальным ID
+func (r *Repository) AddAlbum(ctx context.Context, album models.Album) (int, error) {
+	// Проверяем отмену контекста
+	select {
+	case <-ctx.Done():
+		return 0, ctx.Err()
+	default:
+		// Продолжаем выполнение
+	}
+
+	albums, err := r.GetAllAlbums(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	// Находим максимальный ID
+	maxID := 0
+	for _, a := range albums {
+		if a.ID > maxID {
+			maxID = a.ID
+		}
+	}
+
+	// Всегда генерируем новый ID, даже если в запросе был указан ID
+	album.ID = maxID + 1
+
+	// Устанавливаем дату создания
+	if album.CreatedAt.IsZero() {
+		album.CreatedAt = time.Now()
+	}
+
+	// Добавляем альбом к существующим
+	albums = append(albums, album)
+
+	// Сохраняем обновленные данные
+	if jsonStorage, ok := r.storage.(*JSONStorage); ok {
+		jsonStorage.albums = albums
+		jsonStorage.albumsModified = true
+		jsonStorage.dirtyFlag = true
+		return album.ID, jsonStorage.Persist()
+	}
+
+	return album.ID, nil
+}
+
+// UpdateAlbum обновляет данные альбома по ID
+func (r *Repository) UpdateAlbum(ctx context.Context, id int, updatedAlbum models.Album) error {
+	// Проверяем отмену контекста
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+		// Продолжаем выполнение
+	}
+
+	// Получаем текущий список альбомов
+	albums, err := r.GetAllAlbums(ctx)
+	if err != nil {
+		return err // Исправлено: возвращаем только ошибку
+	}
+
+	// Флаг для проверки, найден ли альбом
+	found := false
+
+	// Обновляем данные альбома
+	for i, album := range albums {
+		if album.ID == id {
+			updatedAlbum.ID = id                     // Сохраняем ID
+			updatedAlbum.CreatedAt = album.CreatedAt // Сохраняем дату создания
+			albums[i] = updatedAlbum
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		return fmt.Errorf("альбом с ID=%d не найден", id)
+	}
+
+	// Сохраняем обновленный список альбомов
+	if jsonStorage, ok := r.storage.(*JSONStorage); ok {
+		jsonStorage.albums = albums
+		jsonStorage.albumsModified = true
+		jsonStorage.dirtyFlag = true
+		return jsonStorage.Persist()
+	}
+
+	return fmt.Errorf("обновление альбомов не поддерживается текущим хранилищем")
+}
+
+// DeleteAlbum Удалить альбом по ID
+func (r *Repository) DeleteAlbum(ctx context.Context, id int) error {
+	// Проверяем отмену контекста
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+		// Продолжаем выполнение
+	}
+
+	// Проверяем существование альбома - исправлено передачей контекста
+	_, err := r.FindAlbumByID(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	// Получаем текущий список альбомов
+	albums, err := r.GetAllAlbums(ctx)
+	if err != nil {
+		return err
+	}
+
+	// Создаем новый слайс без удаляемого альбома
+	newAlbums := make([]models.Album, 0, len(albums))
+	for _, album := range albums {
+		if album.ID != id {
+			newAlbums = append(newAlbums, album)
+		}
+	}
+
+	// Обновляем состояние в JSON-хранилище
+	if jsonStorage, ok := r.storage.(*JSONStorage); ok {
+		// Обновляем кэш альбомов и флаги
+		jsonStorage.albums = newAlbums
+		jsonStorage.albumsModified = true
+		jsonStorage.dirtyFlag = true
+
+		// Сохраняем изменения на диск
+		return jsonStorage.Persist()
+	}
+
+	return fmt.Errorf("удаление альбомов не поддерживается текущим хранилищем")
 }
