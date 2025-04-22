@@ -15,6 +15,21 @@ import (
 	"time"
 )
 
+// @title MPM API
+// @version 1.0
+// @description API для Masterplan Photo Manager
+// @termsOfService http://swagger.io/terms/
+
+// @contact.name API Support
+// @contact.url https://tyatyushkin.ru
+// @contact.email maxim.tyatyushkin@gmail.com
+
+// @license.name Apache 2.0
+// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host localhost:8484
+// @BasePath /api
+
 func main() {
 	// Выводим информацию о доступных переменных окружения
 	log.Println("Доступные переменные окружения для настройки хранилища:")
