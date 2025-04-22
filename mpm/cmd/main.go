@@ -126,7 +126,6 @@ func main() {
 	// Защищенные маршруты (с аутентификацией)
 	// Оберните группу защищенных маршрутов
 	authMux := http.NewServeMux()
-	mux.HandleFunc("/api/auth/login", authHandler.Login)
 	authMux.HandleFunc("GET /api/users", userHandler.GetAllUsers)
 	authMux.HandleFunc("POST /api/albums", albumHandler.CreateAlbum)
 	authMux.HandleFunc("PUT /api/albums/{id}", albumHandler.UpdateAlbum)
@@ -138,6 +137,8 @@ func main() {
 		httpSwagger.DeepLinking(true),
 		httpSwagger.DocExpansion("none"),
 	))
+
+	mux.HandleFunc("/api/auth/login", authHandler.Login)
 
 	// Регистрация защищенных маршрутов с middleware
 	mux.Handle("/api/", authMiddleware(authMux))
