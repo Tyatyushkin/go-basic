@@ -20,6 +20,7 @@ type JSONStorage struct {
 	photosMutex sync.RWMutex // Мьютекс для доступа к фотографиям
 	albumsMutex sync.RWMutex // Мьютекс для доступа к альбомам
 	tagsMutex   sync.RWMutex // Мьютекс для доступа к тегам
+	userMutex   sync.RWMutex // Мьютекс для доступа к пользователям
 
 	// Общий мьютекс для метаданных (dirtyFlag, lastSaveTime)
 	metaMutex sync.RWMutex
@@ -32,6 +33,7 @@ type JSONStorage struct {
 	photos []models.Photo
 	albums []models.Album
 	tags   []models.Tag
+	users  []models.User // Добавлено для хранения пользователей
 
 	// Счетчики для определения новых сущностей
 	lastPhotoIndex int
@@ -42,6 +44,7 @@ type JSONStorage struct {
 	photosModified bool
 	albumsModified bool
 	tagsModified   bool
+	userModified   bool
 }
 
 // NewJSONStorage создает новое хранилище с сохранением в JSON
@@ -57,6 +60,7 @@ func NewJSONStorage(dataDir string, saveInterval time.Duration) *JSONStorage {
 		photos:       make([]models.Photo, 0),
 		albums:       make([]models.Album, 0),
 		tags:         make([]models.Tag, 0),
+		users:        make([]models.User, 0), // Инициализация слайса пользователей
 		lastSaveTime: time.Now(),
 	}
 }
@@ -216,6 +220,15 @@ func (s *JSONStorage) Load() error {
 	tagsCount := s.lastTagIndex
 	s.tagsMutex.Unlock()
 
+	// Загружаем пользователей
+	usersPath := filepath.Join(s.dataDir, "users.json")
+	s.userMutex.Lock()
+	usersErr := s.loadFile(usersPath, &s.users)
+	s.userMutex.Unlock()
+	if usersErr != nil {
+		return fmt.Errorf("ошибка при загрузке пользователей: %v", usersErr)
+	}
+
 	log.Printf("Загружено: %d фотографий, %d альбомов, %d тегов",
 		photosCount, albumsCount, tagsCount)
 
@@ -229,6 +242,7 @@ func (s *JSONStorage) Persist() error {
 	photosModified := s.photosModified
 	albumsModified := s.albumsModified
 	tagsModified := s.tagsModified
+	userModified := s.userModified
 	s.metaMutex.Unlock()
 
 	// Создаём функцию разблокировки
@@ -243,6 +257,9 @@ func (s *JSONStorage) Persist() error {
 		if tagsModified {
 			s.tagsMutex.Unlock()
 		}
+		if userModified {
+			s.userMutex.Unlock()
+		}
 	}
 
 	// Блокируем только нужные мьютексы
@@ -256,6 +273,10 @@ func (s *JSONStorage) Persist() error {
 
 	if tagsModified {
 		s.tagsMutex.Lock()
+	}
+
+	if userModified {
+		s.userMutex.Lock()
 	}
 
 	// Гарантируем разблокировку при выходе
@@ -289,9 +310,12 @@ func (s *JSONStorage) loadFile(filePath string, target interface{}) error {
 
 // persistData внутренняя функция для сохранения данных
 func (s *JSONStorage) persistData() error {
+	s.metaMutex.RLock()
 	if !s.dirtyFlag {
-		return nil // Нет изменений для сохранения
+		s.metaMutex.RUnlock()
+		return nil
 	}
+	s.metaMutex.RUnlock()
 
 	// Сохраняем только те фотографии, для которых были изменения
 	if s.photosModified {
@@ -299,7 +323,9 @@ func (s *JSONStorage) persistData() error {
 		if err := s.saveFile(photosPath, s.photos); err != nil {
 			return fmt.Errorf("ошибка при сохранении фотографий: %v", err)
 		}
+		s.metaMutex.Lock()
 		s.photosModified = false
+		s.metaMutex.Unlock()
 		log.Printf("Сохранены фотографии (%d)", len(s.photos))
 	}
 
@@ -309,7 +335,9 @@ func (s *JSONStorage) persistData() error {
 		if err := s.saveFile(albumsPath, s.albums); err != nil {
 			return fmt.Errorf("ошибка при сохранении альбомов: %v", err)
 		}
+		s.metaMutex.Lock()
 		s.albumsModified = false
+		s.metaMutex.Unlock()
 		log.Printf("Сохранены альбомы (%d)", len(s.albums))
 	}
 
@@ -319,12 +347,22 @@ func (s *JSONStorage) persistData() error {
 		if err := s.saveFile(tagsPath, s.tags); err != nil {
 			return fmt.Errorf("ошибка при сохранении тегов: %v", err)
 		}
+		s.metaMutex.Lock()
 		s.tagsModified = false
+		s.metaMutex.Unlock()
 		log.Printf("Сохранены теги (%d)", len(s.tags))
 	}
 
+	// Сохраняем пользователей
+	usersPath := filepath.Join(s.dataDir, "users.json")
+	if err := s.saveFile(usersPath, s.users); err != nil {
+		return fmt.Errorf("ошибка при сохранении пользователей: %v", err)
+	}
+
+	s.metaMutex.Lock()
 	s.dirtyFlag = false
 	s.lastSaveTime = time.Now()
+	s.metaMutex.Unlock()
 	log.Printf("Данные успешно сохранены в %s", s.dataDir)
 
 	return nil
@@ -454,4 +492,39 @@ func (s *JSONStorage) StartAutoSave(ctx context.Context) {
 	}()
 
 	log.Printf("Запущено автоматическое сохранение с интервалом %v", s.saveInterval)
+}
+
+func (s *JSONStorage) GetUserByCredentials(username, password string) (*models.User, error) {
+	s.userMutex.RLock()
+	defer s.userMutex.RUnlock()
+
+	for _, user := range s.users {
+		// Проверяем совпадение имени пользователя
+		if user.Username == username {
+			// В реальном приложении здесь должна быть проверка хеша пароля
+			// например с использованием bcrypt.CompareHashAndPassword()
+			if user.Password == password {
+				// Возвращаем копию пользователя, а не ссылку на элемент слайса
+				userCopy := user
+				return &userCopy, nil
+			}
+			// Если имя пользователя найдено, но пароль неверный
+			return nil, fmt.Errorf("неверный пароль для пользователя %s", username)
+		}
+	}
+
+	return nil, fmt.Errorf("пользователь %s не найден", username)
+}
+
+func (s *JSONStorage) GetUserByID(id int) (*models.User, error) {
+	s.userMutex.RLock()
+	defer s.userMutex.RUnlock()
+
+	for _, user := range s.users {
+		if user.ID == id {
+			return &user, nil
+		}
+	}
+
+	return nil, fmt.Errorf("пользователь с ID %d не найден", id)
 }
