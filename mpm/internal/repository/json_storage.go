@@ -494,35 +494,32 @@ func (s *JSONStorage) StartAutoSave(ctx context.Context) {
 	log.Printf("Запущено автоматическое сохранение с интервалом %v", s.saveInterval)
 }
 
+// GetUserByCredentials находит пользователя по логину и паролю
 func (s *JSONStorage) GetUserByCredentials(username, password string) (*models.User, error) {
 	s.userMutex.RLock()
 	defer s.userMutex.RUnlock()
 
 	for _, user := range s.users {
-		// Проверяем совпадение имени пользователя
-		if user.Username == username {
-			// В реальном приложении здесь должна быть проверка хеша пароля
-			// например с использованием bcrypt.CompareHashAndPassword()
-			if user.Password == password {
-				// Возвращаем копию пользователя, а не ссылку на элемент слайса
-				userCopy := user
-				return &userCopy, nil
-			}
-			// Если имя пользователя найдено, но пароль неверный
-			return nil, fmt.Errorf("неверный пароль для пользователя %s", username)
+		if user.Username == username && user.Password == password {
+			// Создаем копию пользователя, чтобы избежать гонок данных
+			userCopy := user
+			return &userCopy, nil
 		}
 	}
 
-	return nil, fmt.Errorf("пользователь %s не найден", username)
+	return nil, nil // Возвращаем nil, nil если пользователь не найден
 }
 
+// GetUserByID находит пользователя по ID
 func (s *JSONStorage) GetUserByID(id int) (*models.User, error) {
 	s.userMutex.RLock()
 	defer s.userMutex.RUnlock()
 
 	for _, user := range s.users {
 		if user.ID == id {
-			return &user, nil
+			// Создаем копию пользователя, чтобы избежать гонок данных
+			userCopy := user
+			return &userCopy, nil
 		}
 	}
 
