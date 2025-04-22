@@ -23,7 +23,361 @@ const docTemplate = `{
     },
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
-    "paths": {}
+    "paths": {
+        "/albums": {
+            "get": {
+                "description": "Получить список всех альбомов",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "albums"
+                ],
+                "summary": "Получить все альбомы",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Album"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Создать новый альбом на основе предоставленных данных",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "albums"
+                ],
+                "summary": "Создать новый альбом",
+                "parameters": [
+                    {
+                        "description": "Данные нового альбома",
+                        "name": "album",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.Album"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/models.Album"
+                        }
+                    },
+                    "400": {
+                        "description": "Неверный формат данных",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервер��",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/albums/{id}": {
+            "get": {
+                "description": "Получить данные конкретного альбома по его идентификатору",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "albums"
+                ],
+                "summary": "Получить альбом по ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID альбома",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.Album"
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректный ID альбома",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Альбом не найден",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Обновить данные существующего альбома по его идентификатору",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "albums"
+                ],
+                "summary": "Обновить альбом",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID альбома",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Данные альбома для обновления",
+                        "name": "album",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.Album"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Альбом успешно обновлен",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректный ID альбома или данные",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Альбом не найден",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Удалить альбом по его идентификатору",
+                "tags": [
+                    "albums"
+                ],
+                "summary": "Удалить альбом",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID альбома",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Альбом успешно удален"
+                    },
+                    "400": {
+                        "description": "Некорректный ID альбома",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Альбом не найден",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "models.Album": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "description": "Дата создания альбома",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "Название альбома",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "Уникальный идентификатор альбома",
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "photos": {
+                    "description": "Фотографии в альбоме",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Photo"
+                    }
+                },
+                "tags": {
+                    "description": "Теги альбома",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "user": {
+                    "description": "Пользователь, который создал альбом",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.User"
+                        }
+                    ]
+                }
+            }
+        },
+        "models.Metadata": {
+            "type": "object",
+            "properties": {
+                "key": {
+                    "description": "Тип метаданных (например, \"camera\", \"location\", \"date_taken\")",
+                    "type": "string"
+                },
+                "value": {
+                    "description": "Значение метаданных",
+                    "type": "string"
+                }
+            }
+        },
+        "models.Photo": {
+            "type": "object",
+            "properties": {
+                "album": {
+                    "description": "Альбом, к которому принадлежит фотография",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.Album"
+                        }
+                    ]
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "description": "Уникальный идентификатор фотографии",
+                    "type": "integer"
+                },
+                "metadata": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Metadata"
+                    }
+                },
+                "name": {
+                    "description": "Название фотографии",
+                    "type": "string"
+                },
+                "path": {
+                    "description": "Путь к фотографии (локальный или url)",
+                    "type": "string"
+                },
+                "storage_type": {
+                    "description": "Тип хранения фотографии (local, google, dropbox)",
+                    "type": "string"
+                },
+                "tags": {
+                    "description": "Теги фотографии",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "user": {
+                    "description": "Пользователь, который загрузил фотографию",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.User"
+                        }
+                    ]
+                }
+            }
+        },
+        "models.User": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "description": "Дата регистрации пользователя",
+                    "type": "string"
+                },
+                "email": {
+                    "description": "Email пользователя",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "Уникальный идентификатор пользователя",
+                    "type": "integer"
+                },
+                "username": {
+                    "description": "Имя пользователя",
+                    "type": "string"
+                }
+            }
+        }
+    }
 }`
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it

@@ -1,4 +1,91 @@
 basePath: /api
+definitions:
+  models.Album:
+    properties:
+      created_at:
+        description: Дата создания альбома
+        type: string
+      description:
+        description: Название альбома
+        type: string
+      id:
+        description: Уникальный идентификатор альбома
+        type: integer
+      name:
+        type: string
+      photos:
+        description: Фотографии в альбоме
+        items:
+          $ref: '#/definitions/models.Photo'
+        type: array
+      tags:
+        description: Теги альбома
+        items:
+          type: string
+        type: array
+      user:
+        allOf:
+        - $ref: '#/definitions/models.User'
+        description: Пользователь, который создал альбом
+    type: object
+  models.Metadata:
+    properties:
+      key:
+        description: Тип метаданных (например, "camera", "location", "date_taken")
+        type: string
+      value:
+        description: Значение метаданных
+        type: string
+    type: object
+  models.Photo:
+    properties:
+      album:
+        allOf:
+        - $ref: '#/definitions/models.Album'
+        description: Альбом, к которому принадлежит фотография
+      created_at:
+        type: string
+      id:
+        description: Уникальный идентификатор фотографии
+        type: integer
+      metadata:
+        items:
+          $ref: '#/definitions/models.Metadata'
+        type: array
+      name:
+        description: Название фотографии
+        type: string
+      path:
+        description: Путь к фотографии (локальный или url)
+        type: string
+      storage_type:
+        description: Тип хранения фотографии (local, google, dropbox)
+        type: string
+      tags:
+        description: Теги фотографии
+        items:
+          type: string
+        type: array
+      user:
+        allOf:
+        - $ref: '#/definitions/models.User'
+        description: Пользователь, который загрузил фотографию
+    type: object
+  models.User:
+    properties:
+      created_at:
+        description: Дата регистрации пользователя
+        type: string
+      email:
+        description: Email пользователя
+        type: string
+      id:
+        description: Уникальный идентификатор пользователя
+        type: integer
+      username:
+        description: Имя пользователя
+        type: string
+    type: object
 host: tyatyushkin.ru:8484
 info:
   contact:
@@ -12,5 +99,152 @@ info:
   termsOfService: http://swagger.io/terms/
   title: MPM API
   version: "1.0"
-paths: {}
+paths:
+  /albums:
+    get:
+      consumes:
+      - application/json
+      description: Получить список всех альбомов
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Album'
+            type: array
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            type: string
+      summary: Получить все альбомы
+      tags:
+      - albums
+    post:
+      consumes:
+      - application/json
+      description: Создать новый альбом на основе предоставленных данных
+      parameters:
+      - description: Данные нового альбома
+        in: body
+        name: album
+        required: true
+        schema:
+          $ref: '#/definitions/models.Album'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Album'
+        "400":
+          description: Неверный формат данных
+          schema:
+            type: string
+        "500":
+          description: Внутренняя ошибка сервер��
+          schema:
+            type: string
+      summary: Создать новый альбом
+      tags:
+      - albums
+  /albums/{id}:
+    delete:
+      description: Удалить альбом по его идентификатору
+      parameters:
+      - description: ID альбома
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: Альбом успешно удален
+        "400":
+          description: Некорректный ID альбома
+          schema:
+            type: string
+        "404":
+          description: Альбом не найден
+          schema:
+            type: string
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            type: string
+      summary: Удалить альбом
+      tags:
+      - albums
+    get:
+      consumes:
+      - application/json
+      description: Получить данные конкретного альбома по его идентификатору
+      parameters:
+      - description: ID альбома
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Album'
+        "400":
+          description: Некорректный ID альбома
+          schema:
+            type: string
+        "404":
+          description: Альбом не найден
+          schema:
+            type: string
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            type: string
+      summary: Получить альбом по ID
+      tags:
+      - albums
+    put:
+      consumes:
+      - application/json
+      description: Обновить данные существующего альбома по его идентификатору
+      parameters:
+      - description: ID альбома
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Данные альбома для обновления
+        in: body
+        name: album
+        required: true
+        schema:
+          $ref: '#/definitions/models.Album'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Альбом успешно обновлен
+          schema:
+            type: string
+        "400":
+          description: Некорректный ID альбома или данные
+          schema:
+            type: string
+        "404":
+          description: Альбом не найден
+          schema:
+            type: string
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            type: string
+      summary: Обновить альбом
+      tags:
+      - albums
 swagger: "2.0"

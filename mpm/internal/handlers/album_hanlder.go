@@ -20,6 +20,17 @@ func NewAlbumHandler(repo *repository.Repository) *AlbumHandler {
 	}
 }
 
+// CreateAlbum godoc
+// @Summary Создать новый альбом
+// @Description Создать новый альбом на основе предоставленных данных
+// @Tags albums
+// @Accept json
+// @Produce json
+// @Param album body models.Album true "Данные нового альбома"
+// @Success 201 {object} models.Album
+// @Failure 400 {object} string "Неверный формат данных"
+// @Failure 500 {object} string "Внутренняя ошибка сервер��"
+// @Router /albums [post]
 func (h *AlbumHandler) CreateAlbum(w http.ResponseWriter, r *http.Request) {
 	log.Println("Получен запрос POST /api/albums")
 
@@ -64,6 +75,19 @@ func (h *AlbumHandler) CreateAlbum(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Успешно создан альбом с ID=%d", newAlbum.ID)
 }
 
+// UpdateAlbum godoc
+// @Summary Обновить альбом
+// @Description Обновить данные существующего альбома по его идентификатору
+// @Tags albums
+// @Accept json
+// @Produce json
+// @Param id path int true "ID альбома"
+// @Param album body models.Album true "Данные альбома для обновления"
+// @Success 200 {string} string "Альбом успешно обновлен"
+// @Failure 400 {object} string "Некорректный ID альбома или данные"
+// @Failure 404 {object} string "Альбом не найден"
+// @Failure 500 {object} string "Внутренняя ошибка сервера"
+// @Router /albums/{id} [put]
 func (h *AlbumHandler) UpdateAlbum(w http.ResponseWriter, r *http.Request) {
 	log.Println("Получен запрос PUT /api/albums/{id}")
 
@@ -116,6 +140,15 @@ func (h *AlbumHandler) UpdateAlbum(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Успешно обновлен альбом с ID=%d", id)
 }
 
+// GetAllAlbums godoc
+// @Summary Получить все альбомы
+// @Description Получить список всех альбомов
+// @Tags albums
+// @Accept json
+// @Produce json
+// @Success 200 {array} models.Album
+// @Failure 500 {object} string "Внутренняя ошибка сервера"
+// @Router /albums [get]
 func (h *AlbumHandler) GetAllAlbums(w http.ResponseWriter, r *http.Request) {
 	log.Println("Получен запрос GET /api/albums")
 
@@ -144,6 +177,18 @@ func (h *AlbumHandler) GetAllAlbums(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// GetAlbumByID godoc
+// @Summary Получить альбом по ID
+// @Description Получить данные конкретного альбома по его идентификатору
+// @Tags albums
+// @Accept json
+// @Produce json
+// @Param id path int true "ID альбома"
+// @Success 200 {object} models.Album
+// @Failure 400 {object} string "Некорректный ID альбома"
+// @Failure 404 {object} string "Альбом не найден"
+// @Failure 500 {object} string "Внутренняя ошибка сервера"
+// @Router /albums/{id} [get]
 func (h *AlbumHandler) GetAlbumByID(w http.ResponseWriter, r *http.Request) {
 	log.Println("Получен запрос GET /api/albums/{id}")
 
@@ -208,6 +253,16 @@ func splitPath(path string) []string {
 	return parts
 }
 
+// DeleteAlbum godoc
+// @Summary Удалить альбом
+// @Description Удалить альбом по его идентификатору
+// @Tags albums
+// @Param id path int true "ID альбома"
+// @Success 204 "Альбом успешно удален"
+// @Failure 400 {object} string "Некорректный ID альбома"
+// @Failure 404 {object} string "Альбом не найден"
+// @Failure 500 {object} string "Внутренняя ошибка сервера"
+// @Router /albums/{id} [delete]
 func (h *AlbumHandler) DeleteAlbum(w http.ResponseWriter, r *http.Request) {
 	log.Println("Получен запрос DELETE /api/albums/{id}")
 
