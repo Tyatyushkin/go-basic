@@ -23,6 +23,34 @@ type TokenClaims struct {
 	jwt.RegisteredClaims
 }
 
+func NewAuthService(userStorage UserStorageInterface) *AuthService {
+	// По умолчанию используем секрет из переменной окружения или дефолтный
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		// Генерируем 32 байта случайных данных
+		secretBytes := make([]byte, 32)
+		_, err := rand.Read(secretBytes)
+		if err != nil {
+			// Если не удалось сгенерировать, используем запасной вариант
+			jwtSecret = "your_default_secret_key_please_change_in_production"
+		} else {
+			// Кодируем в base64 для удобства хранения/отображения
+			jwtSecret = base64.StdEncoding.EncodeToString(secretBytes)
+			// Рекомендация: сохранить сгенерированный секрет
+			log.Printf("Сгенерирован новый JWT секрет: %s. Рекомендуется сохранить его в переменной окружения JWT_SECRET", jwtSecret)
+		}
+	}
+
+	// Время жизни токена - 24 часа по умолчанию
+	tokenTTL := 24 * time.Hour
+
+	return &AuthService{
+		jwtSecret:   []byte(jwtSecret),
+		tokenTTL:    tokenTTL,
+		userStorage: userStorage,
+	}
+}
+
 func (s *AuthService) GenerateToken(username, password string) (string, error) {
 	user, err := s.userStorage.GetUserByCredentials(username, password)
 	if err != nil {
