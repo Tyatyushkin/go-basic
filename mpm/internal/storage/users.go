@@ -104,7 +104,7 @@ func ensureDefaultUser() error {
 		ID:        1,
 		Username:  "masterplan",
 		Email:     "masterplan@example.com",
-		Password:  "changeme", // TODO: Захешировать пароль
+		Password:  "P@ssw0rd84", // TODO: Захешировать пароль
 		CreatedAt: time.Now(),
 	}
 
