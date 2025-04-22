@@ -20,6 +20,15 @@ func NewUserHandler(userStorage *storage.JSONUserStorage) *UserHandler {
 	}
 }
 
+// GetAllUsers godoc
+// @Summary Получить всех пользователей
+// @Description Получить список всех зарегистрированных пользователей
+// @Tags users
+// @Accept json
+// @Produce json
+// @Success 200 {array} models.User
+// @Failure 500 {object} string "Внутренняя ошибка сервера"
+// @Router /users [get]
 func (h *UserHandler) GetAllUsers(w http.ResponseWriter, r *http.Request) {
 	log.Println("Получен запрос GET /api/users")
 

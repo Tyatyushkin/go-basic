@@ -247,4 +247,25 @@ paths:
       summary: Обновить альбом
       tags:
       - albums
+  /users:
+    get:
+      consumes:
+      - application/json
+      description: Получить список всех зарегистрированных пользователей
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.User'
+            type: array
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            type: string
+      summary: Получить всех пользователей
+      tags:
+      - users
 swagger: "2.0"
