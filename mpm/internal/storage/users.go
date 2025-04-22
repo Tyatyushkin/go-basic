@@ -110,3 +110,35 @@ func ensureDefaultUser() error {
 	users = append(users, defaultUser)
 	return storage.SaveUsers(users)
 }
+
+// GetUserByCredentials находит пользователя по логину и паролю
+func (s *JSONUserStorage) GetUserByCredentials(username, password string) (*models.User, error) {
+	users, err := s.LoadUsers()
+	if err != nil {
+		return nil, err
+	}
+
+	for i, user := range users {
+		if user.Username == username && user.Password == password {
+			return &users[i], nil
+		}
+	}
+
+	return nil, nil // Пользователь не найден
+}
+
+// GetUserByID находит пользователя по ID
+func (s *JSONUserStorage) GetUserByID(id int) (*models.User, error) {
+	users, err := s.LoadUsers()
+	if err != nil {
+		return nil, err
+	}
+
+	for i, user := range users {
+		if user.ID == id {
+			return &users[i], nil
+		}
+	}
+
+	return nil, fmt.Errorf("пользователь с ID %d не найден", id)
+}
