@@ -1,6 +1,7 @@
 package service
 
 import (
+	"crypto/rand"
 	"encoding/base64"
 	"errors"
 	"github.com/golang-jwt/jwt/v5"
