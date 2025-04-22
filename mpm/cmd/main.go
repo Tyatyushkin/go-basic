@@ -117,7 +117,11 @@ func main() {
 	mux.HandleFunc("GET /api/albums", albumHandler.GetAllAlbums)
 	mux.HandleFunc("GET /api/albums/{id}", albumHandler.GetAlbumByID)
 	mux.HandleFunc("DELETE /api/albums/{id}", albumHandler.DeleteAlbum)
-	mux.HandleFunc("GET /swagger/*", httpSwagger.WrapHandler)
+	mux.HandleFunc("/swagger/", httpSwagger.Handler(
+		httpSwagger.URL("/swagger/doc.json"),
+		httpSwagger.DeepLinking(true),
+		httpSwagger.DocExpansion("none"),
+	))
 
 	// Конфигурация сервера
 	server := &http.Server{
