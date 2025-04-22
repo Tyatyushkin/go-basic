@@ -126,7 +126,7 @@ func main() {
 	// Защищенные маршруты (с аутентификацией)
 	// Оберните группу защищенных маршрутов
 	authMux := http.NewServeMux()
-	authMux.HandleFunc("GET /api/users", userHandler.GetAllUsers)
+	mux.HandleFunc("GET /api/users", userHandler.GetAllUsers)
 	authMux.HandleFunc("POST /api/albums", albumHandler.CreateAlbum)
 	authMux.HandleFunc("PUT /api/albums/{id}", albumHandler.UpdateAlbum)
 	authMux.HandleFunc("GET /api/albums", albumHandler.GetAllAlbums)
