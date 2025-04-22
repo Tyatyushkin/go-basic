@@ -10,6 +10,7 @@ import (
 	"mpm/internal/repository"
 	"mpm/internal/service"
 	"mpm/internal/storage"
+	"mpm/middleware"
 	"net/http"
 	"os"
 	"os/signal"
@@ -31,6 +32,11 @@ import (
 
 // @host tyatyushkin.ru:8484
 // @BasePath /api
+
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Введите токен в формате: Bearer {token}
 
 func main() {
 	// Выводим информацию о доступных переменных окружения
@@ -73,10 +79,17 @@ func main() {
 
 	// Создание обработчика для пользователей
 	userHandler := handlers.NewUserHandler(userStorage)
+
 	// Создание обработчика для альбомов
 	albumHandler := handlers.NewAlbumHandler(repo)
-
 	entityService := service.NewEntityService(repo)
+
+	// Создание сервиса аутентификации
+	authService := service.NewAuthService(userStorage)
+	authHandler := handlers.NewAuthHandler(authService)
+
+	// Middlewares
+	authMiddleware := middleware.AuthMiddleware(authService)
 
 	// Запускаем мониторинг с контекстом
 	entityService.StartMonitoring(ctx)
@@ -110,18 +123,26 @@ func main() {
 	// Создание маршрутизатора
 	mux := http.NewServeMux()
 
-	// Регистрация маршрутов
-	mux.HandleFunc("GET /api/users", userHandler.GetAllUsers)
-	mux.HandleFunc("POST /api/albums", albumHandler.CreateAlbum)
-	mux.HandleFunc("PUT /api/albums/{id}", albumHandler.UpdateAlbum)
-	mux.HandleFunc("GET /api/albums", albumHandler.GetAllAlbums)
-	mux.HandleFunc("GET /api/albums/{id}", albumHandler.GetAlbumByID)
-	mux.HandleFunc("DELETE /api/albums/{id}", albumHandler.DeleteAlbum)
+	// Публичные маршруты (без аутентификации)
+	mux.HandleFunc("POST /api/auth/login", authHandler.Login)
+
+	// Защищенные маршруты (с аутентификацией)
+	// Оберните группу защищенных маршрутов
+	authMux := http.NewServeMux()
+	authMux.HandleFunc("GET /api/users", userHandler.GetAllUsers)
+	authMux.HandleFunc("POST /api/albums", albumHandler.CreateAlbum)
+	authMux.HandleFunc("PUT /api/albums/{id}", albumHandler.UpdateAlbum)
+	authMux.HandleFunc("GET /api/albums", albumHandler.GetAllAlbums)
+	authMux.HandleFunc("GET /api/albums/{id}", albumHandler.GetAlbumByID)
+	authMux.HandleFunc("DELETE /api/albums/{id}", albumHandler.DeleteAlbum)
 	mux.HandleFunc("/swagger/", httpSwagger.Handler(
 		httpSwagger.URL("/swagger/doc.json"),
 		httpSwagger.DeepLinking(true),
 		httpSwagger.DocExpansion("none"),
 	))
+
+	// Регистрация защищенных маршрутов с middleware
+	mux.Handle("/api/", authMiddleware(authMux))
 
 	// Конфигурация сервера
 	server := &http.Server{
