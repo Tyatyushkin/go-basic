@@ -33,7 +33,7 @@ import (
 // @host tyatyushkin.ru:8484
 // @BasePath /api
 
-// @securityDefinitions.apikey BearerAuth
+// @securityDefinitions.apikey Bearer
 // @in header
 // @name Authorization
 // @description Введите токен в формате: Bearer {token}

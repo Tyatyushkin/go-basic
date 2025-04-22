@@ -325,7 +325,7 @@ paths:
       tags:
       - users
 securityDefinitions:
-  BearerAuth:
+  Bearer:
     description: 'Введите токен в формате: Bearer {token}'
     in: header
     name: Authorization

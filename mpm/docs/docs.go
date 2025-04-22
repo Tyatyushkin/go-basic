@@ -507,7 +507,7 @@ const docTemplate = `{
         }
     },
     "securityDefinitions": {
-        "BearerAuth": {
+        "Bearer": {
             "description": "Введите токен в формате: Bearer {token}",
             "type": "apiKey",
             "name": "Authorization",
