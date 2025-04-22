@@ -123,12 +123,10 @@ func main() {
 	// Создание маршрутизатора
 	mux := http.NewServeMux()
 
-	// Публичные маршруты (без аутентификации)
-	authMux.HandleFunc("/api/auth/login", authHandler.Login)
-
 	// Защищенные маршруты (с аутентификацией)
 	// Оберните группу защищенных маршрутов
 	authMux := http.NewServeMux()
+	authMux.HandleFunc("/api/auth/login", authHandler.Login)
 	authMux.HandleFunc("GET /api/users", userHandler.GetAllUsers)
 	authMux.HandleFunc("POST /api/albums", albumHandler.CreateAlbum)
 	authMux.HandleFunc("PUT /api/albums/{id}", albumHandler.UpdateAlbum)
