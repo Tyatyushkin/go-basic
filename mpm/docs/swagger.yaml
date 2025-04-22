@@ -1,0 +1,16 @@
+basePath: /api
+host: tyatyushkin.ru:8484
+info:
+  contact:
+    email: maxim.tyatyushkin@gmail.com
+    name: API Support
+    url: https://tyatyushkin.ru
+  description: API для Masterplan Photo Manager
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: MPM API
+  version: "1.0"
+paths: {}
+swagger: "2.0"

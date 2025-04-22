@@ -3,7 +3,9 @@ package main
 import (
 	"context"
 	"errors"
+	httpSwagger "github.com/swaggo/http-swagger"
 	"log"
+	_ "mpm/docs"
 	"mpm/internal/handlers"
 	"mpm/internal/repository"
 	"mpm/internal/service"
@@ -115,6 +117,7 @@ func main() {
 	mux.HandleFunc("GET /api/albums", albumHandler.GetAllAlbums)
 	mux.HandleFunc("GET /api/albums/{id}", albumHandler.GetAlbumByID)
 	mux.HandleFunc("DELETE /api/albums/{id}", albumHandler.DeleteAlbum)
+	mux.HandleFunc("GET /swagger/*", httpSwagger.WrapHandler)
 
 	// Конфигурация сервера
 	server := &http.Server{
