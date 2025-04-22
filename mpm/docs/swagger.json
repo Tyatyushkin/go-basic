@@ -20,6 +20,11 @@
     "paths": {
         "/albums": {
             "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
                 "description": "Получить список всех альбомов",
                 "consumes": [
                     "application/json"
@@ -50,6 +55,11 @@
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
                 "description": "Создать новый альбом на основе предоставленных данных",
                 "consumes": [
                     "application/json"
@@ -96,6 +106,11 @@
         },
         "/albums/{id}": {
             "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
                 "description": "Получить данные конкретного альбома по его идентификатору",
                 "consumes": [
                     "application/json"
@@ -144,6 +159,11 @@
                 }
             },
             "put": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
                 "description": "Обновить данные существующего альбома по его идентификатору",
                 "consumes": [
                     "application/json"
@@ -201,6 +221,11 @@
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
                 "description": "Удалить альбом по его идентификатору",
                 "tags": [
                     "albums"

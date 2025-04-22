@@ -26,6 +26,7 @@ func NewAlbumHandler(repo *repository.Repository) *AlbumHandler {
 // @Tags albums
 // @Accept json
 // @Produce json
+// @Security Bearer
 // @Param album body models.Album true "Данные нового альбома"
 // @Success 201 {object} models.Album
 // @Failure 400 {object} string "Неверный формат данных"
@@ -81,6 +82,7 @@ func (h *AlbumHandler) CreateAlbum(w http.ResponseWriter, r *http.Request) {
 // @Tags albums
 // @Accept json
 // @Produce json
+// @Security Bearer
 // @Param id path int true "ID альбома"
 // @Param album body models.Album true "Данные альбома для обновления"
 // @Success 200 {string} string "Альбом успешно обновлен"
@@ -146,6 +148,7 @@ func (h *AlbumHandler) UpdateAlbum(w http.ResponseWriter, r *http.Request) {
 // @Tags albums
 // @Accept json
 // @Produce json
+// @Security Bearer
 // @Success 200 {array} models.Album
 // @Failure 500 {object} string "Внутренняя ошибка сервера"
 // @Router /albums [get]
@@ -183,6 +186,7 @@ func (h *AlbumHandler) GetAllAlbums(w http.ResponseWriter, r *http.Request) {
 // @Tags albums
 // @Accept json
 // @Produce json
+// @Security Bearer
 // @Param id path int true "ID альбома"
 // @Success 200 {object} models.Album
 // @Failure 400 {object} string "Некорректный ID альбома"
@@ -258,6 +262,7 @@ func splitPath(path string) []string {
 // @Description Удалить альбом по его идентификатору
 // @Tags albums
 // @Param id path int true "ID альбома"
+// @Security Bearer
 // @Success 204 "Альбом успешно удален"
 // @Failure 400 {object} string "Некорректный ID альбома"
 // @Failure 404 {object} string "Альбом не найден"

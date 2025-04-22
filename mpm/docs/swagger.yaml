@@ -130,6 +130,8 @@ paths:
           description: Внутренняя ошибка сервера
           schema:
             type: string
+      security:
+      - Bearer: []
       summary: Получить все альбомы
       tags:
       - albums
@@ -159,6 +161,8 @@ paths:
           description: Внутренняя ошибка сервер��
           schema:
             type: string
+      security:
+      - Bearer: []
       summary: Создать новый альбом
       tags:
       - albums
@@ -186,6 +190,8 @@ paths:
           description: Внутренняя ошибка сервера
           schema:
             type: string
+      security:
+      - Bearer: []
       summary: Удалить альбом
       tags:
       - albums
@@ -218,6 +224,8 @@ paths:
           description: Внутренняя ошибка сервера
           schema:
             type: string
+      security:
+      - Bearer: []
       summary: Получить альбом по ID
       tags:
       - albums
@@ -256,6 +264,8 @@ paths:
           description: Внутренняя ошибка сервера
           schema:
             type: string
+      security:
+      - Bearer: []
       summary: Обновить альбом
       tags:
       - albums

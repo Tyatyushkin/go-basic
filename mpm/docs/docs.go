@@ -26,6 +26,11 @@ const docTemplate = `{
     "paths": {
         "/albums": {
             "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
                 "description": "Получить список всех альбомов",
                 "consumes": [
                     "application/json"
@@ -56,6 +61,11 @@ const docTemplate = `{
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
                 "description": "Создать новый альбом на основе предоставленных данных",
                 "consumes": [
                     "application/json"
@@ -102,6 +112,11 @@ const docTemplate = `{
         },
         "/albums/{id}": {
             "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
                 "description": "Получить данные конкретного альбома по его идентификатору",
                 "consumes": [
                     "application/json"
@@ -150,6 +165,11 @@ const docTemplate = `{
                 }
             },
             "put": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
                 "description": "Обновить данные существующего альбома по его идентификатору",
                 "consumes": [
                     "application/json"
@@ -207,6 +227,11 @@ const docTemplate = `{
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
                 "description": "Удалить альбом по его идентификатору",
                 "tags": [
                     "albums"
