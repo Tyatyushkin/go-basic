@@ -86,7 +86,7 @@ func main() {
 
 	// Создание сервиса аутентификации
 	authService := service.NewAuthService(userStorage)
-	authHandler := handlers.NewAuthHandler(authService)
+	//authHandler := handlers.NewAuthHandler(authService)
 
 	// Middlewares
 	authMiddleware := middleware.AuthMiddleware(authService)
@@ -124,7 +124,7 @@ func main() {
 	mux := http.NewServeMux()
 
 	// Публичные маршруты (без аутентификации)
-	mux.HandleFunc("POST /api/auth/login", authHandler.Login)
+	//mux.HandleFunc("POST /api/auth/login", authHandler.Login)
 
 	// Защищенные маршруты (с аутентификацией)
 	// Оберните группу защищенных маршрутов
