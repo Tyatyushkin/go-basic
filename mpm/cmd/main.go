@@ -138,10 +138,10 @@ func main() {
 		httpSwagger.DocExpansion("none"),
 	))
 
-	mux.HandleFunc("/api/auth/login", authHandler.Login)
-
 	// Регистрация защищенных маршрутов с middleware
 	mux.Handle("/api/", authMiddleware(authMux))
+
+	mux.HandleFunc("/api/auth/login", authHandler.Login)
 
 	// Конфигурация сервера
 	server := &http.Server{
