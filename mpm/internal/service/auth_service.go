@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"github.com/golang-jwt/jwt/v5"
+	"log"
 	"mpm/internal/models"
 	"time"
 )
