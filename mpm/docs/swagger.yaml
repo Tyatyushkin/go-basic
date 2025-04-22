@@ -1,5 +1,17 @@
 basePath: /api
 definitions:
+  handlers.loginRequest:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    type: object
+  handlers.loginResponse:
+    properties:
+      token:
+        type: string
+    type: object
   models.Album:
     properties:
       created_at:
@@ -247,6 +259,40 @@ paths:
       summary: Обновить альбом
       tags:
       - albums
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Авторизация пользователя и получение JWT токена
+      parameters:
+      - description: Учетные данные пользователя
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.loginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.loginResponse'
+        "400":
+          description: Некорректный запрос
+          schema:
+            type: string
+        "401":
+          description: Неверные учетные данные
+          schema:
+            type: string
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            type: string
+      summary: Авторизация пользователя
+      tags:
+      - auth
   /users:
     get:
       consumes:
@@ -268,4 +314,10 @@ paths:
       summary: Получить всех пользователей
       tags:
       - users
+securityDefinitions:
+  BearerAuth:
+    description: 'Введите токен в формате: Bearer {token}'
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"
