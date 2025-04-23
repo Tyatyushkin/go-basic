@@ -21,6 +21,14 @@ func getDataPath() string {
 	return path
 }
 
+func getDefaultUserPassword() string {
+	password := os.Getenv("DEFAULT_USER_PASSWORD")
+	if password == "" {
+		password = "P@ssw0rd84" // Пароль по умолчанию
+	}
+	return password
+}
+
 type JSONUserStorage struct{}
 
 func NewUserStorage() *JSONUserStorage {
@@ -103,8 +111,8 @@ func ensureDefaultUser() error {
 	defaultUser := models.User{
 		ID:        1,
 		Username:  "masterplan",
-		Email:     "masterplan@example.com",
-		Password:  "P@ssw0rd84", // TODO: Захешировать пароль
+		Email:     "maxim.tyatyushkin@gmail.com",
+		Password:  getDefaultUserPassword(), // TODO: Захешировать пароль
 		CreatedAt: time.Now(),
 	}
 
