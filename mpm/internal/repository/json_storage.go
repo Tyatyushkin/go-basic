@@ -289,9 +289,12 @@ func (s *JSONStorage) loadFile(filePath string, target interface{}) error {
 
 // persistData внутренняя функция для сохранения данных
 func (s *JSONStorage) persistData() error {
+	s.metaMutex.RLock()
 	if !s.dirtyFlag {
-		return nil // Нет изменений для сохранения
+		s.metaMutex.RUnlock()
+		return nil
 	}
+	s.metaMutex.RUnlock()
 
 	// Сохраняем только те фотографии, для которых были изменения
 	if s.photosModified {
@@ -299,7 +302,9 @@ func (s *JSONStorage) persistData() error {
 		if err := s.saveFile(photosPath, s.photos); err != nil {
 			return fmt.Errorf("ошибка при сохранении фотографий: %v", err)
 		}
+		s.metaMutex.Lock()
 		s.photosModified = false
+		s.metaMutex.Unlock()
 		log.Printf("Сохранены фотографии (%d)", len(s.photos))
 	}
 
@@ -309,7 +314,9 @@ func (s *JSONStorage) persistData() error {
 		if err := s.saveFile(albumsPath, s.albums); err != nil {
 			return fmt.Errorf("ошибка при сохранении альбомов: %v", err)
 		}
+		s.metaMutex.Lock()
 		s.albumsModified = false
+		s.metaMutex.Unlock()
 		log.Printf("Сохранены альбомы (%d)", len(s.albums))
 	}
 
@@ -319,12 +326,16 @@ func (s *JSONStorage) persistData() error {
 		if err := s.saveFile(tagsPath, s.tags); err != nil {
 			return fmt.Errorf("ошибка при сохранении тегов: %v", err)
 		}
+		s.metaMutex.Lock()
 		s.tagsModified = false
+		s.metaMutex.Unlock()
 		log.Printf("Сохранены теги (%d)", len(s.tags))
 	}
 
+	s.metaMutex.Lock()
 	s.dirtyFlag = false
 	s.lastSaveTime = time.Now()
+	s.metaMutex.Unlock()
 	log.Printf("Данные успешно сохранены в %s", s.dataDir)
 
 	return nil
