@@ -1,0 +1,7 @@
+syntax = "proto3";
+package mpm.albums;
+option go_package = "github.com/Tyatyushkin/mpm/proto/albums";
+
+message Album {
+
+}
