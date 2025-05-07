@@ -3,5 +3,18 @@ package mpm.albums;
 option go_package = "github.com/Tyatyushkin/mpm/proto/albums";
 
 message Album {
+  int32 id = 1;
+  string name = 2;
+  string description = 3;
 
+}
+message CreateAlbumRequest {
+  string name = 1;
+  string description = 2;
+}
+
+message Empty{}
+
+service AlbumService {
+  rpc CreateAlbum(CreateAlbumRequest) returns (Album);
 }
