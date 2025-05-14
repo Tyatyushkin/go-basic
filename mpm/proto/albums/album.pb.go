@@ -297,7 +297,7 @@ const file_proto_albums_album_proto_rawDesc = "" +
 	"\x05Empty2\x9a\x01\n" +
 	"\fAlbumService\x12@\n" +
 	"\vCreateAlbum\x12\x1e.mpm.albums.CreateAlbumRequest\x1a\x11.mpm.albums.Album\x12H\n" +
-	"\tGetAlbums\x12\x1c.mpm.albums.GetAlbumsRequest\x1a\x1d.mpm.albums.GetAlbumsResponseB)Z'github.com/Tyatyushkin/mpm/proto/albumsb\x06proto3"
+	"\tGetAlbums\x12\x1c.mpm.albums.GetAlbumsRequest\x1a\x1d.mpm.albums.GetAlbumsResponseB\x0eZ\fproto/albumsb\x06proto3"
 
 var (
 	file_proto_albums_album_proto_rawDescOnce sync.Once

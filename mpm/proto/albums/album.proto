@@ -1,6 +1,6 @@
 syntax = "proto3";
 package mpm.albums;
-option go_package = "github.com/Tyatyushkin/mpm/proto/albums";
+option go_package = "proto/albums";
 
 message Album {
   int32 id = 1;

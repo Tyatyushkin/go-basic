@@ -1,11 +1,11 @@
 package grpc
 
 import (
-	pb "github.com/Tyatyushkin/mpm/proto/albums"
-	"mpm/internal/storage"
+	"mpm/internal/repository"
+	pb "mpm/proto/albums"
 )
 
 type AlbumServer struct {
 	pb.UnimplementedAlbumServiceServer
-	albumStorage storage.AlbumStorage
+	repository *repository.Repository
 }
