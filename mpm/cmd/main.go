@@ -4,13 +4,17 @@ import (
 	"context"
 	"errors"
 	httpSwagger "github.com/swaggo/http-swagger"
+	"google.golang.org/grpc"
 	"log"
 	_ "mpm/docs"
+	grpcserver "mpm/internal/grpc"
 	"mpm/internal/handlers"
 	"mpm/internal/repository"
 	"mpm/internal/service"
 	"mpm/internal/storage"
 	"mpm/middleware"
+	pb "mpm/proto/albums"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -123,6 +127,9 @@ func main() {
 	// Создание маршрутизатора
 	mux := http.NewServeMux()
 
+	// Создаем gRPC сервер
+	grpcServer := grpc.NewServer()
+
 	// Защищенные маршруты (с аутентификацией)
 	// Оберните группу защищенных маршрутов
 	authMux := http.NewServeMux()
@@ -143,11 +150,31 @@ func main() {
 
 	mux.HandleFunc("/api/auth/login", authHandler.Login)
 
+	// Регистрируем наш AlbumServer
+	albumServer := grpcserver.NewAlbumServer(repo)
+	pb.RegisterAlbumServiceServer(grpcServer, albumServer)
+
 	// Конфигурация сервера
 	server := &http.Server{
 		Addr:    ":8484",
 		Handler: mux,
 	}
+
+	// Создаем сетевой слушатель
+	grpcListener, err := net.Listen("tcp", ":50051")
+	if err != nil {
+		log.Printf("Ошибка при создании gRPC слушателя: %v", err)
+		stop()
+		return
+	}
+
+	// Запускаем gRPC сервер в отдельной горутине
+	go func() {
+		log.Println("Запуск gRPC сервера на порту 50051...")
+		if err := grpcServer.Serve(grpcListener); err != nil {
+			log.Printf("Ошибка запуска gRPC сервера: %v", err)
+		}
+	}()
 
 	// Запуск сервера в отдельной горутине
 	serverError := make(chan error, 1)
@@ -174,5 +201,13 @@ func main() {
 
 		log.Println("HTTP сервер остановлен")
 	}
+
+	// Добавляем graceful shutdown для gRPC сервера
+	go func() {
+		<-ctx.Done()
+		log.Println("Начинаем graceful shutdown gRPC сервера...")
+		grpcServer.GracefulStop()
+		log.Println("gRPC сервер остановлен")
+	}()
 
 }
