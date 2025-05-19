@@ -1,0 +1,28 @@
+syntax = "proto3";
+package mpm.albums;
+option go_package = "proto/albums";
+
+message Album {
+  int32 id = 1;
+  string name = 2;
+  string description = 3;
+  string created_at = 6;
+}
+message CreateAlbumRequest {
+  string name = 1;
+  string description = 2;
+}
+
+message GetAlbumsRequest {}
+
+message GetAlbumsResponse {
+  repeated Album albums = 1;
+}
+
+message Empty{}
+
+service AlbumService {
+  rpc CreateAlbum(CreateAlbumRequest) returns (Album);
+  rpc GetAlbums(GetAlbumsRequest) returns (GetAlbumsResponse);
+
+}
