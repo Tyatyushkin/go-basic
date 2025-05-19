@@ -3,12 +3,11 @@ package client
 import (
 	"context"
 	"fmt"
-	"log"
-	"time"
-
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"log"
 	pb "mpm-client/proto/albums"
+	"time"
 )
 
 // AlbumClient представляет клиент для работы с альбомами через gRPC
