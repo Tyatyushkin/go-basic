@@ -20,10 +20,12 @@ func NewAlbumClient(serverAddr string) (*AlbumClient, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	conn, err := grpc.Dial(
+	// Хотя DialContext помечен как устаревший, он все еще работает
+	// и это простейший способ использовать контекст для таймаута
+	conn, err := grpc.DialContext(ctx,
 		serverAddr,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithBlock(), // блокирует до установления соединения, учитывает ctx
+		grpc.WithBlock(),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("не удалось подключиться к серверу: %w", err)
