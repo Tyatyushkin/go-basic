@@ -17,17 +17,18 @@ type AlbumClient struct {
 
 // NewAlbumClient создает новый клиент для работы с альбомами
 func NewAlbumClient(serverAddr string) (*AlbumClient, error) {
-	// Создаем контекст с таймаутом для подключения
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	// Устанавливаем соединение с сервером без TLS, используя DialContext
-	conn, err := grpc.DialContext(ctx, serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.Dial(
+		serverAddr,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithBlock(), // блокирует до установления соединения, учитывает ctx
+	)
 	if err != nil {
 		return nil, fmt.Errorf("не удалось подключиться к серверу: %w", err)
 	}
 
-	// Создаем клиент gRPC
 	client := pb.NewAlbumServiceClient(conn)
 
 	return &AlbumClient{
