@@ -19,7 +19,6 @@ message GetAlbumsResponse {
   repeated Album albums = 1;
 }
 
-
 message DeleteAlbumRequest {
   int32 id = 1;
 }
