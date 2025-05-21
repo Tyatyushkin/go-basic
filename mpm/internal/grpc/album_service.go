@@ -70,3 +70,23 @@ func (s *AlbumServer) CreateAlbum(ctx context.Context, req *pb.CreateAlbumReques
 		CreatedAt:   createdAlbum.CreatedAt.Format(time.RFC3339),
 	}, nil
 }
+
+func (s *AlbumServer) DeleteAlbum(ctx context.Context, req *pb.DeleteAlbumRequest) (*pb.DeleteAlbumResponse, error) {
+	// Проверяем входные данные
+	if req.Id <= 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "некорректный ID альбома")
+	}
+
+	// Преобразуем ID из int32 в int
+	albumID := int(req.Id)
+
+	// Удаляем альбом через репозиторий
+	err := s.repository.DeleteAlbum(ctx, albumID)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "ошибка удаления альбома: %v", err)
+	}
+
+	return &pb.DeleteAlbumResponse{
+		Success: true,
+	}, nil
+}
