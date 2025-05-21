@@ -1,0 +1,9 @@
+go 1.23.3
+
+use (
+	./homework01
+	./homework02
+	./homework03
+	./mpm
+	./mpm-client
+)
