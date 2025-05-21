@@ -75,3 +75,18 @@ func (c *AlbumClient) CreateAlbum(ctx context.Context, name, description string)
 
 	return response, nil
 }
+
+// DeleteAlbum удаляет альбом по идентификатору
+func (c *AlbumClient) DeleteAlbum(ctx context.Context, id int32) (bool, error) {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	response, err := c.client.DeleteAlbum(ctx, &pb.DeleteAlbumRequest{
+		Id: id,
+	})
+	if err != nil {
+		return false, fmt.Errorf("ошибка при удалении альбома: %w", err)
+	}
+
+	return response.Success, nil
+}

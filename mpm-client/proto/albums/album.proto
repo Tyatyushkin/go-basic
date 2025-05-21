@@ -19,10 +19,18 @@ message GetAlbumsResponse {
   repeated Album albums = 1;
 }
 
+message DeleteAlbumRequest {
+  int32 id = 1;
+}
+
+message DeleteAlbumResponse {
+  bool success = 1;
+}
+
 message Empty{}
 
 service AlbumService {
   rpc CreateAlbum(CreateAlbumRequest) returns (Album);
   rpc GetAlbums(GetAlbumsRequest) returns (GetAlbumsResponse);
-
+  rpc DeleteAlbum(DeleteAlbumRequest) returns (DeleteAlbumResponse);
 }

@@ -21,6 +21,7 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	AlbumService_CreateAlbum_FullMethodName = "/mpm.albums.AlbumService/CreateAlbum"
 	AlbumService_GetAlbums_FullMethodName   = "/mpm.albums.AlbumService/GetAlbums"
+	AlbumService_DeleteAlbum_FullMethodName = "/mpm.albums.AlbumService/DeleteAlbum"
 )
 
 // AlbumServiceClient is the client API for AlbumService service.
@@ -29,6 +30,7 @@ const (
 type AlbumServiceClient interface {
 	CreateAlbum(ctx context.Context, in *CreateAlbumRequest, opts ...grpc.CallOption) (*Album, error)
 	GetAlbums(ctx context.Context, in *GetAlbumsRequest, opts ...grpc.CallOption) (*GetAlbumsResponse, error)
+	DeleteAlbum(ctx context.Context, in *DeleteAlbumRequest, opts ...grpc.CallOption) (*DeleteAlbumResponse, error)
 }
 
 type albumServiceClient struct {
@@ -59,12 +61,23 @@ func (c *albumServiceClient) GetAlbums(ctx context.Context, in *GetAlbumsRequest
 	return out, nil
 }
 
+func (c *albumServiceClient) DeleteAlbum(ctx context.Context, in *DeleteAlbumRequest, opts ...grpc.CallOption) (*DeleteAlbumResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteAlbumResponse)
+	err := c.cc.Invoke(ctx, AlbumService_DeleteAlbum_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AlbumServiceServer is the server API for AlbumService service.
 // All implementations must embed UnimplementedAlbumServiceServer
 // for forward compatibility.
 type AlbumServiceServer interface {
 	CreateAlbum(context.Context, *CreateAlbumRequest) (*Album, error)
 	GetAlbums(context.Context, *GetAlbumsRequest) (*GetAlbumsResponse, error)
+	DeleteAlbum(context.Context, *DeleteAlbumRequest) (*DeleteAlbumResponse, error)
 	mustEmbedUnimplementedAlbumServiceServer()
 }
 
@@ -80,6 +93,9 @@ func (UnimplementedAlbumServiceServer) CreateAlbum(context.Context, *CreateAlbum
 }
 func (UnimplementedAlbumServiceServer) GetAlbums(context.Context, *GetAlbumsRequest) (*GetAlbumsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAlbums not implemented")
+}
+func (UnimplementedAlbumServiceServer) DeleteAlbum(context.Context, *DeleteAlbumRequest) (*DeleteAlbumResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteAlbum not implemented")
 }
 func (UnimplementedAlbumServiceServer) mustEmbedUnimplementedAlbumServiceServer() {}
 func (UnimplementedAlbumServiceServer) testEmbeddedByValue()                      {}
@@ -138,6 +154,24 @@ func _AlbumService_GetAlbums_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AlbumService_DeleteAlbum_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteAlbumRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AlbumServiceServer).DeleteAlbum(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AlbumService_DeleteAlbum_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AlbumServiceServer).DeleteAlbum(ctx, req.(*DeleteAlbumRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AlbumService_ServiceDesc is the grpc.ServiceDesc for AlbumService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -152,6 +186,10 @@ var AlbumService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetAlbums",
 			Handler:    _AlbumService_GetAlbums_Handler,
+		},
+		{
+			MethodName: "DeleteAlbum",
+			Handler:    _AlbumService_DeleteAlbum_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

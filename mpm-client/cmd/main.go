@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 
 	"mpm-client/internal/client"
@@ -69,6 +70,29 @@ func main() {
 		fmt.Printf("Альбом успешно создан:\nID: %d\nНазвание: %s\nОписание: %s\nДата создания: %s\n",
 			album.Id, album.Name, album.Description, album.CreatedAt)
 
+	case "delete":
+		if len(args) < 2 {
+			fmt.Println("Недостаточно аргументов. Использование: delete <id>")
+			os.Exit(1)
+		}
+
+		id, err := strconv.ParseInt(args[1], 10, 32)
+		if err != nil {
+			fmt.Printf("Некорректный ID альбома: %v\n", err)
+			os.Exit(1)
+		}
+
+		success, err := albumClient.DeleteAlbum(ctx, int32(id))
+		if err != nil {
+			log.Fatalf("Ошибка при удалении альбома: %v", err)
+		}
+
+		if success {
+			fmt.Printf("Альбом с ID %d успешно удален\n", id)
+		} else {
+			fmt.Printf("Не удалось удалить альбом с ID %d\n", id)
+		}
+
 	default:
 		fmt.Printf("Неизвестная команда: %s\n", args[0])
 		printHelp()
@@ -79,8 +103,9 @@ func main() {
 func printHelp() {
 	fmt.Println("Использование: mpm-client [опции] <команда> [аргументы]")
 	fmt.Println("\nКоманды:")
-	fmt.Println("  list                   Получить список всех альбомов")
-	fmt.Println("  create <название> <описание>   Создать новый альбом")
+	fmt.Println("  list                         Получить список всех альбомов")
+	fmt.Println("  create <название> <описание> Создать новый альбом")
+	fmt.Println("  delete <id>                  Удалить альбом по ID")
 	fmt.Println("\nОпции:")
-	fmt.Println("  -server string         Адрес gRPC сервера (по умолчанию \"localhost:50051\")")
+	fmt.Println("  -server string               Адрес gRPC сервера (по умолчанию \"localhost:50051\")")
 }
