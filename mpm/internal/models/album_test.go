@@ -1,6 +1,7 @@
 package models
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -85,4 +86,30 @@ func TestAlbum_GetID(t *testing.T) {
 func TestAlbum_GetType(t *testing.T) {
 	album := Album{}
 	assert.Equal(t, "album", album.GetType(), "GetType должен возвращать строку 'album'")
+}
+
+func TestAlbum_Serialization(t *testing.T) {
+	album := Album{
+		ID:          1,
+		Name:        "Летний отпуск",
+		Description: "Фотографии с отпуска на море",
+		Tags:        []string{"лето", "море", "отпуск"},
+	}
+
+	// Тест сериализации в JSON
+	t.Run("Serialize to JSON", func(t *testing.T) {
+		data, err := json.Marshal(album)
+		assert.NoError(t, err, "Ошибка при сериализации альбома")
+		assert.Contains(t, string(data), `"name":"Летний отпуск"`, "JSON должен содержать корректное название")
+		assert.Contains(t, string(data), `"tags":["лето","море","отпуск"]`, "JSON должен содержать корректные теги")
+	})
+
+	// Тест десериализации из JSON
+	t.Run("Deserialize from JSON", func(t *testing.T) {
+		jsonData := `{"id":1,"name":"Летний отпуск","description":"Фотографии с отпуска на море","tags":["лето","море","отпуск"]}`
+		var deserializedAlbum Album
+		err := json.Unmarshal([]byte(jsonData), &deserializedAlbum)
+		assert.NoError(t, err, "Ошибка при десериализации альбома")
+		assert.Equal(t, album, deserializedAlbum, "Десериализованный альбом должен совпадать с оригиналом")
+	})
 }
