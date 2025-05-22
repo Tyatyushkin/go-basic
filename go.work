@@ -5,4 +5,5 @@ use (
 	./homework02
 	./homework03
 	./mpm
+	./mpm-client
 )
