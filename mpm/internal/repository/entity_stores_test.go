@@ -12,10 +12,12 @@ func TestNewPhotoStore(t *testing.T) {
 
 	if store == nil {
 		t.Error("Expected PhotoStore to be created")
+		return
 	}
 
 	if store.items == nil {
 		t.Error("Expected items slice to be initialized")
+		return
 	}
 
 	if len(store.items) != 0 {
@@ -86,8 +88,8 @@ func TestPhotoStore_GetAll(t *testing.T) {
 	photo1 := models.Photo{ID: 1, Name: "photo1.jpg"}
 	photo2 := models.Photo{ID: 2, Name: "photo2.jpg"}
 
-	store.Add(photo1)
-	store.Add(photo2)
+	_ = store.Add(photo1)
+	_ = store.Add(photo2)
 
 	photos := store.GetAll()
 
@@ -105,7 +107,7 @@ func TestPhotoStore_GetAllEntities(t *testing.T) {
 	store := NewPhotoStore()
 
 	photo := models.Photo{ID: 1, Name: "test.jpg"}
-	store.Add(photo)
+	_ = store.Add(photo)
 
 	entities := store.GetAllEntities()
 
@@ -129,7 +131,7 @@ func TestPhotoStore_GetNew(t *testing.T) {
 	photo1 := models.Photo{ID: 1, Name: "photo1.jpg"}
 	photo2 := models.Photo{ID: 2, Name: "photo2.jpg"}
 
-	store.Add(photo1)
+	_ = store.Add(photo1)
 
 	newPhotos := store.GetNew()
 	if len(newPhotos) != 1 {
@@ -145,7 +147,7 @@ func TestPhotoStore_GetNew(t *testing.T) {
 		t.Errorf("Expected 0 new photos on second call, got %d", len(newPhotos2))
 	}
 
-	store.Add(photo2)
+	_ = store.Add(photo2)
 
 	newPhotos3 := store.GetNew()
 	if len(newPhotos3) != 1 {
@@ -161,7 +163,7 @@ func TestPhotoStore_GetNewEntities(t *testing.T) {
 	store := NewPhotoStore()
 
 	photo := models.Photo{ID: 1, Name: "test.jpg"}
-	store.Add(photo)
+	_ = store.Add(photo)
 
 	newEntities := store.GetNewEntities()
 
@@ -186,8 +188,8 @@ func TestPhotoStore_Count(t *testing.T) {
 		t.Errorf("Expected count 0, got %d", store.Count())
 	}
 
-	store.Add(models.Photo{ID: 1, Name: "photo1.jpg"})
-	store.Add(models.Photo{ID: 2, Name: "photo2.jpg"})
+	_ = store.Add(models.Photo{ID: 1, Name: "photo1.jpg"})
+	_ = store.Add(models.Photo{ID: 2, Name: "photo2.jpg"})
 
 	if store.Count() != 2 {
 		t.Errorf("Expected count 2, got %d", store.Count())
@@ -210,7 +212,7 @@ func TestPhotoStore_Concurrency(t *testing.T) {
 					ID:   goroutineID*photosPerGoroutine + j + 1,
 					Name: "photo.jpg",
 				}
-				store.Add(photo)
+				_ = store.Add(photo)
 			}
 		}(i)
 	}
@@ -228,10 +230,12 @@ func TestNewAlbumStore(t *testing.T) {
 
 	if store == nil {
 		t.Error("Expected AlbumStore to be created")
+		return
 	}
 
 	if store.items == nil {
 		t.Error("Expected items slice to be initialized")
+		return
 	}
 
 	if len(store.items) != 0 {
@@ -286,8 +290,8 @@ func TestAlbumStore_GetAll(t *testing.T) {
 	album1 := models.Album{ID: 1, Name: "Album 1"}
 	album2 := models.Album{ID: 2, Name: "Album 2"}
 
-	store.Add(album1)
-	store.Add(album2)
+	_ = store.Add(album1)
+	_ = store.Add(album2)
 
 	albums := store.GetAll()
 
@@ -306,10 +310,12 @@ func TestNewTagStore(t *testing.T) {
 
 	if store == nil {
 		t.Error("Expected TagStore to be created")
+		return
 	}
 
 	if store.items == nil {
 		t.Error("Expected items slice to be initialized")
+		return
 	}
 
 	if len(store.items) != 0 {
@@ -362,8 +368,8 @@ func TestTagStore_GetAll(t *testing.T) {
 	tag1 := models.Tag{ID: 1, Name: "tag1"}
 	tag2 := models.Tag{ID: 2, Name: "tag2"}
 
-	store.Add(tag1)
-	store.Add(tag2)
+	_ = store.Add(tag1)
+	_ = store.Add(tag2)
 
 	tags := store.GetAll()
 
@@ -383,7 +389,7 @@ func TestTagStore_GetNew(t *testing.T) {
 	tag1 := models.Tag{ID: 1, Name: "tag1"}
 	tag2 := models.Tag{ID: 2, Name: "tag2"}
 
-	store.Add(tag1)
+	_ = store.Add(tag1)
 
 	newTags := store.GetNew()
 	if len(newTags) != 1 {
@@ -395,7 +401,7 @@ func TestTagStore_GetNew(t *testing.T) {
 		t.Errorf("Expected 0 new tags on second call, got %d", len(newTags2))
 	}
 
-	store.Add(tag2)
+	_ = store.Add(tag2)
 
 	newTags3 := store.GetNew()
 	if len(newTags3) != 1 {
@@ -410,8 +416,8 @@ func TestTagStore_Count(t *testing.T) {
 		t.Errorf("Expected count 0, got %d", store.Count())
 	}
 
-	store.Add(models.Tag{ID: 1, Name: "tag1"})
-	store.Add(models.Tag{ID: 2, Name: "tag2"})
+	_ = store.Add(models.Tag{ID: 1, Name: "tag1"})
+	_ = store.Add(models.Tag{ID: 2, Name: "tag2"})
 
 	if store.Count() != 2 {
 		t.Errorf("Expected count 2, got %d", store.Count())
