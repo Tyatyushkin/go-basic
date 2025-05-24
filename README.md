@@ -17,7 +17,7 @@
 
 ### HW - 13
 1. Добавлены тесты для mpm как обычные unit, так и mock
-2. Покрыты тестами слои handlers, services, repository
+2. Покрыты тестами слои handlers, services, repository и middleware
 3. Общее покрытие тестами проекта 86%
 
 ### HW - 12

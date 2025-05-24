@@ -134,6 +134,7 @@ func TestCreateStorage_UnknownType(t *testing.T) {
 	storage, err := CreateStorage("unknown", tempDir, saveInterval)
 	if err == nil {
 		t.Error("Expected error for unknown storage type")
+		return
 	}
 
 	if storage != nil {
@@ -147,10 +148,17 @@ func TestCreateStorage_UnknownType(t *testing.T) {
 }
 
 func TestCreateStorage_StorageConstants(t *testing.T) {
+	// Проверяем, что константы определены правильно
+	if StorageTypeJSON == "" {
+		t.Error("StorageTypeJSON should not be empty")
+	}
 	if StorageTypeJSON != "json" {
 		t.Errorf("Expected StorageTypeJSON to be 'json', got '%s'", StorageTypeJSON)
 	}
 
+	if StorageTypePostgres == "" {
+		t.Error("StorageTypePostgres should not be empty")
+	}
 	if StorageTypePostgres != "postgres" {
 		t.Errorf("Expected StorageTypePostgres to be 'postgres', got '%s'", StorageTypePostgres)
 	}
