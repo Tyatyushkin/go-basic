@@ -164,14 +164,17 @@ func TestEntityService_StartMonitoring(t *testing.T) {
 	mockRepo.On("GetEntitiesCounts").Return(0, 0, 0).Maybe()
 	mockRepo.On("GetNewEntities").Return([]models.Photo{}, []models.Album{}, []models.Tag{}).Maybe()
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	defer cancel()
 
-	service.StartMonitoring(ctx)
+	done := make(chan struct{})
+	go func() {
+		service.StartMonitoring(ctx)
+		close(done)
+	}()
 
-	time.Sleep(50 * time.Millisecond)
-	cancel()
-	time.Sleep(50 * time.Millisecond)
+	<-ctx.Done()
+	<-done
 }
 
 func TestEntityService_monitorEntities(t *testing.T) {
@@ -184,11 +187,15 @@ func TestEntityService_monitorEntities(t *testing.T) {
 
 		ctx, cancel := context.WithCancel(context.Background())
 
-		go service.monitorEntities(ctx)
+		done := make(chan struct{})
+		go func() {
+			service.monitorEntities(ctx)
+			close(done)
+		}()
 
 		time.Sleep(50 * time.Millisecond)
 		cancel()
-		time.Sleep(50 * time.Millisecond)
+		<-done
 	})
 
 	t.Run("detects new entities", func(t *testing.T) {
@@ -213,9 +220,14 @@ func TestEntityService_monitorEntities(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), 300*time.Millisecond)
 		defer cancel()
 
-		go service.monitorEntities(ctx)
+		done := make(chan struct{})
+		go func() {
+			service.monitorEntities(ctx)
+			close(done)
+		}()
 
 		time.Sleep(250 * time.Millisecond)
+		<-done
 	})
 }
 
