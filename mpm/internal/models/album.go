@@ -1,6 +1,10 @@
 package models
 
-import "time"
+import (
+	"fmt"
+	"strings"
+	"time"
+)
 
 type Album struct {
 	ID          int       `json:"id" db:"id"` // Уникальный идентификатор альбома
@@ -18,4 +22,24 @@ func (a Album) GetID() int {
 
 func (a Album) GetType() string {
 	return "album"
+}
+
+func (a Album) Validate() error {
+	if a.Name == "" {
+		return fmt.Errorf("название альбома не может быть пустым")
+	}
+	if len(a.Name) > 100 {
+		return fmt.Errorf("название альбома слишком длинное")
+	}
+	if len(a.Description) > 500 {
+		return fmt.Errorf("описание альбома слишком длинное")
+	}
+
+	for _, tag := range a.Tags {
+		if tag == "" || strings.Contains(tag, " ") {
+			return fmt.Errorf("теги содержат недопустимые символы")
+		}
+	}
+
+	return nil
 }

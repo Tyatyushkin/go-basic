@@ -232,8 +232,7 @@ func (s *JSONStorage) Persist() error {
 	s.metaMutex.Unlock()
 
 	// Создаём функцию разблокировки
-	var unlock func()
-	unlock = func() {
+	unlock := func() {
 		if photosModified {
 			s.photosMutex.Unlock()
 		}
