@@ -30,9 +30,8 @@ type RepositoryInterface interface {
 
 // EntityService служит для работы с сущностями через репозиторий
 type EntityService struct {
-	repo              RepositoryInterface
-	monitoringStarted sync.Once
-	mutex             sync.Mutex
+	repo  RepositoryInterface
+	mutex sync.Mutex
 }
 
 // NewEntityService создает новый сервис для работы с сущностями
