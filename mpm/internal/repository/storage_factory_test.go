@@ -148,19 +148,25 @@ func TestCreateStorage_UnknownType(t *testing.T) {
 }
 
 func TestCreateStorage_StorageConstants(t *testing.T) {
-	// Проверяем, что константы определены правильно
-	if StorageTypeJSON == "" {
-		t.Error("StorageTypeJSON should not be empty")
-	}
+	// Проверяем, что константы определены с ожидаемыми значениями
 	if StorageTypeJSON != "json" {
 		t.Errorf("Expected StorageTypeJSON to be 'json', got '%s'", StorageTypeJSON)
 	}
 
-	if StorageTypePostgres == "" {
-		t.Error("StorageTypePostgres should not be empty")
-	}
 	if StorageTypePostgres != "postgres" {
 		t.Errorf("Expected StorageTypePostgres to be 'postgres', got '%s'", StorageTypePostgres)
+	}
+
+	// Проверяем, что константы можно использовать для создания хранилища
+	tempDir := t.TempDir()
+
+	// Тестируем JSON константу
+	storage, err := CreateStorage(StorageTypeJSON, tempDir, time.Second)
+	if err != nil {
+		t.Errorf("Failed to create storage with StorageTypeJSON constant: %v", err)
+	}
+	if storage == nil {
+		t.Error("Expected storage to be created with StorageTypeJSON constant")
 	}
 }
 
