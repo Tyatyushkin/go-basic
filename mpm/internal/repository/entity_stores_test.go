@@ -74,6 +74,7 @@ func TestPhotoStore_AddEntity(t *testing.T) {
 	err = store.AddEntity(wrongType)
 	if err == nil {
 		t.Error("Expected error when adding wrong entity type")
+		return
 	}
 
 	expectedError := "неверный тип сущности для PhotoStore"
@@ -281,6 +282,7 @@ func TestAlbumStore_AddEntity(t *testing.T) {
 	err = store.AddEntity(wrongType)
 	if err == nil {
 		t.Error("Expected error when adding wrong entity type")
+		return
 	}
 }
 
@@ -359,6 +361,7 @@ func TestTagStore_AddEntity(t *testing.T) {
 	err = store.AddEntity(wrongType)
 	if err == nil {
 		t.Error("Expected error when adding wrong entity type")
+		return
 	}
 }
 
