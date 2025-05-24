@@ -36,6 +36,7 @@ func TestNewRepository(t *testing.T) {
 
 			if repo == nil {
 				t.Error("Expected repository to be created")
+				return
 			}
 
 			if repo.storage == nil {
