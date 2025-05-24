@@ -36,8 +36,8 @@ func TestNewAuthService(t *testing.T) {
 	mockStorage := &MockUserStorage{}
 
 	t.Run("with JWT_SECRET env var", func(t *testing.T) {
-		os.Setenv("JWT_SECRET", "test_secret")
-		defer os.Unsetenv("JWT_SECRET")
+		_ = os.Setenv("JWT_SECRET", "test_secret")
+		defer func() { _ = os.Unsetenv("JWT_SECRET") }()
 
 		service := NewAuthService(mockStorage)
 
@@ -48,7 +48,7 @@ func TestNewAuthService(t *testing.T) {
 	})
 
 	t.Run("without JWT_SECRET env var", func(t *testing.T) {
-		os.Unsetenv("JWT_SECRET")
+		_ = os.Unsetenv("JWT_SECRET")
 
 		service := NewAuthService(mockStorage)
 
