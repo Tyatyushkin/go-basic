@@ -84,14 +84,14 @@ func TestCreateStorage_Postgres(t *testing.T) {
 	originalEnv := os.Getenv("MPM_DATABASE_URL")
 	defer func() {
 		if originalEnv != "" {
-			os.Setenv("MPM_DATABASE_URL", originalEnv)
+			_ = os.Setenv("MPM_DATABASE_URL", originalEnv)
 		} else {
-			os.Unsetenv("MPM_DATABASE_URL")
+			_ = os.Unsetenv("MPM_DATABASE_URL")
 		}
 	}()
 
 	t.Run("Without connection string", func(t *testing.T) {
-		os.Unsetenv("MPM_DATABASE_URL")
+		_ = os.Unsetenv("MPM_DATABASE_URL")
 
 		storage, err := CreateStorage("postgres", tempDir, saveInterval)
 		if err == nil {
@@ -109,7 +109,7 @@ func TestCreateStorage_Postgres(t *testing.T) {
 	})
 
 	t.Run("With connection string", func(t *testing.T) {
-		os.Setenv("MPM_DATABASE_URL", "postgresql://user:pass@localhost/db")
+		_ = os.Setenv("MPM_DATABASE_URL", "postgresql://user:pass@localhost/db")
 
 		storage, err := CreateStorage("postgres", tempDir, saveInterval)
 		if err == nil {
@@ -162,13 +162,13 @@ func TestCreateStorage_PostgresCaseInsensitive(t *testing.T) {
 	originalEnv := os.Getenv("MPM_DATABASE_URL")
 	defer func() {
 		if originalEnv != "" {
-			os.Setenv("MPM_DATABASE_URL", originalEnv)
+			_ = os.Setenv("MPM_DATABASE_URL", originalEnv)
 		} else {
-			os.Unsetenv("MPM_DATABASE_URL")
+			_ = os.Unsetenv("MPM_DATABASE_URL")
 		}
 	}()
 
-	os.Setenv("MPM_DATABASE_URL", "postgresql://user:pass@localhost/db")
+	_ = os.Setenv("MPM_DATABASE_URL", "postgresql://user:pass@localhost/db")
 
 	testCases := []string{"POSTGRES", "Postgres", "PostgreS", "postgres"}
 
