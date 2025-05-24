@@ -112,8 +112,8 @@ func TestRepository_GetAllPhotos(t *testing.T) {
 	photo1 := models.Photo{ID: 1, Name: "photo1.jpg"}
 	photo2 := models.Photo{ID: 2, Name: "photo2.jpg"}
 
-	repo.SaveEntity(photo1)
-	repo.SaveEntity(photo2)
+	_ = repo.SaveEntity(photo1)
+	_ = repo.SaveEntity(photo2)
 
 	photos := repo.GetAllPhotos()
 	if len(photos) != 2 {
@@ -130,9 +130,9 @@ func TestRepository_GetAllAlbums(t *testing.T) {
 	album2 := models.Album{ID: 2, Name: "Album 2"}
 	defaultAlbum := models.Album{ID: 0, Name: "Default", Description: "Альбом по умолчанию для всех фотографий"}
 
-	repo.SaveEntity(album1)
-	repo.SaveEntity(album2)
-	repo.SaveEntity(defaultAlbum)
+	_ = repo.SaveEntity(album1)
+	_ = repo.SaveEntity(album2)
+	_ = repo.SaveEntity(defaultAlbum)
 
 	albums, err := repo.GetAllAlbums(ctx)
 	if err != nil {
@@ -165,9 +165,9 @@ func TestRepository_GetAllAlbums_WithDuplicateDefaults(t *testing.T) {
 	defaultAlbum2 := models.Album{ID: 2, Name: "Default", Description: "Альбом по умолчанию для всех фотографий"}
 	regularAlbum := models.Album{ID: 3, Name: "Regular Album"}
 
-	repo.SaveEntity(defaultAlbum1)
-	repo.SaveEntity(defaultAlbum2)
-	repo.SaveEntity(regularAlbum)
+	_ = repo.SaveEntity(defaultAlbum1)
+	_ = repo.SaveEntity(defaultAlbum2)
+	_ = repo.SaveEntity(regularAlbum)
 
 	albums, err := repo.GetAllAlbums(ctx)
 	if err != nil {
@@ -210,8 +210,8 @@ func TestRepository_GetAllTags(t *testing.T) {
 	tag1 := models.Tag{ID: 1, Name: "tag1"}
 	tag2 := models.Tag{ID: 2, Name: "tag2"}
 
-	repo.SaveEntity(tag1)
-	repo.SaveEntity(tag2)
+	_ = repo.SaveEntity(tag1)
+	_ = repo.SaveEntity(tag2)
 
 	tags := repo.GetAllTags()
 	if len(tags) != 2 {
@@ -223,10 +223,10 @@ func TestRepository_GetEntitiesCounts(t *testing.T) {
 	tempDir := t.TempDir()
 	repo := NewRepository("json", tempDir, time.Hour)
 
-	repo.SaveEntity(models.Photo{ID: 1, Name: "photo1.jpg"})
-	repo.SaveEntity(models.Photo{ID: 2, Name: "photo2.jpg"})
-	repo.SaveEntity(models.Album{ID: 1, Name: "Album 1"})
-	repo.SaveEntity(models.Tag{ID: 1, Name: "tag1"})
+	_ = repo.SaveEntity(models.Photo{ID: 1, Name: "photo1.jpg"})
+	_ = repo.SaveEntity(models.Photo{ID: 2, Name: "photo2.jpg"})
+	_ = repo.SaveEntity(models.Album{ID: 1, Name: "Album 1"})
+	_ = repo.SaveEntity(models.Tag{ID: 1, Name: "tag1"})
 
 	photoCount, albumCount, tagCount := repo.GetEntitiesCounts()
 
@@ -247,9 +247,9 @@ func TestRepository_GetNewEntities(t *testing.T) {
 	tempDir := t.TempDir()
 	repo := NewRepository("json", tempDir, time.Hour)
 
-	repo.SaveEntity(models.Photo{ID: 1, Name: "photo1.jpg"})
-	repo.SaveEntity(models.Album{ID: 1, Name: "Album 1"})
-	repo.SaveEntity(models.Tag{ID: 1, Name: "tag1"})
+	_ = repo.SaveEntity(models.Photo{ID: 1, Name: "photo1.jpg"})
+	_ = repo.SaveEntity(models.Album{ID: 1, Name: "Album 1"})
+	_ = repo.SaveEntity(models.Tag{ID: 1, Name: "tag1"})
 
 	newPhotos, newAlbums, newTags := repo.GetNewEntities()
 
@@ -285,7 +285,7 @@ func TestRepository_FindPhotoByID(t *testing.T) {
 	repo := NewRepository("json", tempDir, time.Hour)
 
 	photo := models.Photo{ID: 1, Name: "test.jpg"}
-	repo.SaveEntity(photo)
+	_ = repo.SaveEntity(photo)
 
 	foundPhoto, err := repo.FindPhotoByID(1)
 	if err != nil {
@@ -308,7 +308,7 @@ func TestRepository_FindAlbumByID(t *testing.T) {
 	ctx := context.Background()
 
 	album := models.Album{ID: 1, Name: "Test Album"}
-	repo.SaveEntity(album)
+	_ = repo.SaveEntity(album)
 
 	foundAlbum, err := repo.FindAlbumByID(ctx, 1)
 	if err != nil {
@@ -338,7 +338,7 @@ func TestRepository_FindTagByID(t *testing.T) {
 	repo := NewRepository("json", tempDir, time.Hour)
 
 	tag := models.Tag{ID: 1, Name: "test-tag"}
-	repo.SaveEntity(tag)
+	_ = repo.SaveEntity(tag)
 
 	foundTag, err := repo.FindTagByID(1)
 	if err != nil {
@@ -402,7 +402,7 @@ func TestRepository_UpdateAlbum(t *testing.T) {
 	ctx := context.Background()
 
 	album := models.Album{ID: 1, Name: "Original Album", CreatedAt: time.Now()}
-	repo.SaveEntity(album)
+	_ = repo.SaveEntity(album)
 
 	updatedAlbum := models.Album{
 		Name:        "Updated Album",
@@ -451,7 +451,7 @@ func TestRepository_DeleteAlbum(t *testing.T) {
 	ctx := context.Background()
 
 	album := models.Album{ID: 1, Name: "Test Album"}
-	repo.SaveEntity(album)
+	_ = repo.SaveEntity(album)
 
 	err := repo.DeleteAlbum(ctx, 1)
 	if err != nil {
@@ -482,7 +482,7 @@ func TestRepository_PersistData(t *testing.T) {
 	repo := NewRepository("json", tempDir, time.Hour)
 
 	photo := models.Photo{ID: 1, Name: "test.jpg"}
-	repo.SaveEntity(photo)
+	_ = repo.SaveEntity(photo)
 
 	err := repo.PersistData()
 	if err != nil {
