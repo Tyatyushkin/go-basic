@@ -133,9 +133,15 @@ func TestJSONStorage_PersistAndLoad(t *testing.T) {
 	album := models.Album{ID: 1, Name: "Test Album"}
 	tag := models.Tag{ID: 1, Name: "nature"}
 
-	storage.Save(photo)
-	storage.Save(album)
-	storage.Save(tag)
+	if err := storage.Save(photo); err != nil {
+		t.Fatalf("Save photo failed: %v", err)
+	}
+	if err := storage.Save(album); err != nil {
+		t.Fatalf("Save album failed: %v", err)
+	}
+	if err := storage.Save(tag); err != nil {
+		t.Fatalf("Save tag failed: %v", err)
+	}
 
 	// Принудительно сохраняем
 	err := storage.Persist()
@@ -183,8 +189,12 @@ func TestJSONStorage_GetNewEntities(t *testing.T) {
 	storage := NewJSONStorage(tempDir, time.Hour)
 
 	// Добавляем первую партию
-	storage.Save(models.Photo{ID: 1, Name: "photo1.jpg"})
-	storage.Save(models.Album{ID: 1, Name: "Album 1"})
+	if err := storage.Save(models.Photo{ID: 1, Name: "photo1.jpg"}); err != nil {
+		t.Fatalf("Save photo failed: %v", err)
+	}
+	if err := storage.Save(models.Album{ID: 1, Name: "Album 1"}); err != nil {
+		t.Fatalf("Save album failed: %v", err)
+	}
 
 	// Получаем новые (должны быть все)
 	newPhotos := storage.GetNewPhotos()
@@ -202,8 +212,12 @@ func TestJSONStorage_GetNewEntities(t *testing.T) {
 	}
 
 	// Добавляем еще
-	storage.Save(models.Photo{ID: 2, Name: "photo2.jpg"})
-	storage.Save(models.Tag{ID: 1, Name: "nature"})
+	if err := storage.Save(models.Photo{ID: 2, Name: "photo2.jpg"}); err != nil {
+		t.Fatalf("Save photo failed: %v", err)
+	}
+	if err := storage.Save(models.Tag{ID: 1, Name: "nature"}); err != nil {
+		t.Fatalf("Save tag failed: %v", err)
+	}
 
 	// Получаем новые (должны быть только добавленные)
 	newPhotos = storage.GetNewPhotos()
@@ -233,7 +247,9 @@ func TestJSONStorage_AutoSave(t *testing.T) {
 
 	// Добавляем данные
 	photo := models.Photo{ID: 1, Name: "test.jpg"}
-	storage.Save(photo)
+	if err := storage.Save(photo); err != nil {
+		t.Fatalf("Save failed: %v", err)
+	}
 
 	// Ждем автосохранения
 	time.Sleep(time.Millisecond * 200)
