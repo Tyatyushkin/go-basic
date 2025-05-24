@@ -149,7 +149,7 @@ func (h *TestAlbumHandler) CreateAlbum(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 
 	// Сериализуем созданный альбом в JSON и отправляем клиенту
-	json.NewEncoder(w).Encode(newAlbum)
+	_ = json.NewEncoder(w).Encode(newAlbum)
 }
 
 // GetAllAlbums метод для тестового обработчика
@@ -167,7 +167,7 @@ func (h *TestAlbumHandler) GetAllAlbums(w http.ResponseWriter, r *http.Request) 
 	w.Header().Set("Content-Type", "application/json")
 
 	// Сериализуем альбомы в JSON и отправляем клиенту
-	json.NewEncoder(w).Encode(albums)
+	_ = json.NewEncoder(w).Encode(albums)
 }
 
 // GetAlbumByID метод для тестового обработчика
@@ -213,7 +213,7 @@ func (h *TestAlbumHandler) GetAlbumByID(w http.ResponseWriter, r *http.Request) 
 	w.Header().Set("Content-Type", "application/json")
 
 	// Сериализуем альбом в JSON и отправляем клиенту
-	json.NewEncoder(w).Encode(album)
+	_ = json.NewEncoder(w).Encode(album)
 }
 
 // UpdateAlbum метод для тестового обработчика
