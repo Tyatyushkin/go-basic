@@ -5,20 +5,38 @@ import (
 	"fmt"
 	"log"
 	"mpm/internal/models"
-	"mpm/internal/repository"
 	"sync"
 	"time"
 )
 
+type RepositoryInterface interface {
+	SaveEntities(entities []models.Entity) error
+	SaveEntity(entity models.Entity) error
+	PersistData() error
+	LoadData() error
+	GetAllPhotos() []models.Photo
+	GetAllAlbums(ctx context.Context) ([]models.Album, error)
+	GetAllTags() []models.Tag
+	GetEntitiesCounts() (photoCount, albumCount, tagCount int)
+	GetNewEntities() (newPhotos []models.Photo, newAlbums []models.Album, newTags []models.Tag)
+	FindPhotoByID(id int) (models.Photo, error)
+	FindAlbumByID(ctx context.Context, id int) (models.Album, error)
+	FindTagByID(id int) (models.Tag, error)
+	AddAlbum(ctx context.Context, album models.Album) (int, error)
+	UpdateAlbum(ctx context.Context, id int, updatedAlbum models.Album) error
+	DeleteAlbum(ctx context.Context, id int) error
+	InitStorage(ctx context.Context)
+}
+
 // EntityService служит для работы с сущностями через репозиторий
 type EntityService struct {
-	repo              *repository.Repository
+	repo              RepositoryInterface
 	monitoringStarted sync.Once
 	mutex             sync.Mutex
 }
 
 // NewEntityService создает новый сервис для работы с сущностями
-func NewEntityService(repo *repository.Repository) *EntityService {
+func NewEntityService(repo RepositoryInterface) *EntityService {
 	return &EntityService{
 		repo: repo,
 	}
