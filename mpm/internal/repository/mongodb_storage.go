@@ -18,8 +18,9 @@ type MongoDBStorage struct {
 
 	// Кэш для совместимости с существующей архитектурой
 	albums []models.Album
-	photos []models.Photo
-	tags   []models.Tag
+	// photos и tags пока не используются, но зарезервированы для будущего использования
+	_ []models.Photo // nolint:unused
+	_ []models.Tag   // nolint:unused
 }
 
 // NewMongoDBStorage создает новое MongoDB хранилище
@@ -37,8 +38,6 @@ func NewMongoDBStorage() (EntityStorage, error) {
 		client:       client,
 		albumStorage: mongodb.NewAlbumStorage(client),
 		albums:       make([]models.Album, 0),
-		photos:       make([]models.Photo, 0),
-		tags:         make([]models.Tag, 0),
 	}
 
 	log.Println("MongoDB хранилище инициализировано")
@@ -121,6 +120,8 @@ type MongoAlbumStore struct {
 }
 
 // NewMongoAlbumStore создает хранилище альбомов для MongoDB
+//
+//nolint:unused // API function for future use
 func NewMongoAlbumStore(client *mongodb.Client) *MongoAlbumStore {
 	return &MongoAlbumStore{
 		storage: mongodb.NewAlbumStorage(client),
@@ -210,11 +211,12 @@ func (s *MongoAlbumStore) Count() int {
 // MongoPhotoStore заглушка для фотографий (пока не реализовано)
 type MongoPhotoStore struct{}
 
-func NewMongoPhotoStore(client *mongodb.Client) *MongoPhotoStore {
+//nolint:unused // API function for future use
+func NewMongoPhotoStore(_ *mongodb.Client) *MongoPhotoStore {
 	return &MongoPhotoStore{}
 }
 
-func (s *MongoPhotoStore) Add(entity models.Entity) error {
+func (s *MongoPhotoStore) Add(_ models.Entity) error {
 	return fmt.Errorf("фото хранилище MongoDB пока не реализовано")
 }
 
@@ -233,11 +235,12 @@ func (s *MongoPhotoStore) Count() int {
 // MongoTagStore заглушка для тегов (пока не реализовано)
 type MongoTagStore struct{}
 
-func NewMongoTagStore(client *mongodb.Client) *MongoTagStore {
+//nolint:unused // API function for future use
+func NewMongoTagStore(_ *mongodb.Client) *MongoTagStore {
 	return &MongoTagStore{}
 }
 
-func (s *MongoTagStore) Add(entity models.Entity) error {
+func (s *MongoTagStore) Add(_ models.Entity) error {
 	return fmt.Errorf("тег хранилище MongoDB пока не реализовано")
 }
 
