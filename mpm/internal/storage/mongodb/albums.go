@@ -2,6 +2,7 @@ package mongodb
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -9,6 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+
 	"mpm/internal/models"
 )
 
@@ -58,7 +60,7 @@ func (s *AlbumStorage) GetByID(ctx context.Context, id string) (*models.Album, e
 	var doc AlbumDocument
 	err = s.collection.FindOne(ctx, bson.M{"_id": objectID}).Decode(&doc)
 	if err != nil {
-		if err == mongo.ErrNoDocuments {
+		if errors.Is(err, mongo.ErrNoDocuments) {
 			return nil, fmt.Errorf("album not found")
 		}
 		return nil, fmt.Errorf("failed to get album: %w", err)
@@ -183,7 +185,12 @@ func (s *AlbumStorage) List(ctx context.Context, opts *AlbumListOptions) ([]*mod
 	if err != nil {
 		return nil, fmt.Errorf("failed to find albums: %w", err)
 	}
-	defer cursor.Close(ctx)
+	defer func() {
+		if closeErr := cursor.Close(ctx); closeErr != nil {
+			// Логируем ошибку закрытия курсора, но не прерываем выполнение
+			_ = closeErr
+		}
+	}()
 
 	// Декодируем результаты
 	var albums []*models.Album
