@@ -12,6 +12,7 @@ import (
 const (
 	StorageTypeJSON     = "json"
 	StorageTypePostgres = "postgres"
+	StorageTypeMongoDB  = "mongodb"
 	// В будущем можно добавить другие типы: redis, mysql и т.д.
 )
 
@@ -42,6 +43,10 @@ func CreateStorage(storageType, dataDir string, saveInterval time.Duration) (Ent
 		log.Printf("Используется PostgreSQL-хранилище с подключением: %s", connStr)
 		// Здесь будет вызов конструктора PostgreSQL-хранилища когда оно будет реализовано
 		return nil, fmt.Errorf("хранилище типа %s пока не реализовано", storageType)
+
+	case StorageTypeMongoDB:
+		log.Printf("Используется MongoDB-хранилище")
+		return NewMongoDBStorage()
 
 	default:
 		return nil, fmt.Errorf("неизвестный тип хранилища: %s", storageType)
