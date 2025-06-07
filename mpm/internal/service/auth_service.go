@@ -4,11 +4,13 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"errors"
-	"github.com/golang-jwt/jwt/v5"
 	"log"
-	"mpm/internal/models"
 	"os"
 	"time"
+
+	"github.com/golang-jwt/jwt/v5"
+
+	"mpm/internal/models"
 )
 
 type AuthService struct {
