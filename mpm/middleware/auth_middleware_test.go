@@ -2,14 +2,15 @@ package middleware
 
 import (
 	"context"
-	"mpm/internal/models"
-	"mpm/internal/service"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+
+	"mpm/internal/models"
+	"mpm/internal/service"
 )
 
 type MockUserStorage struct {
