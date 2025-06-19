@@ -6,7 +6,6 @@ import (
 	"log"
 	"time"
 
-	"mpm/config"
 	"mpm/internal/models"
 	"mpm/internal/storage/mongodb"
 )
@@ -24,14 +23,9 @@ type MongoDBStorage struct {
 }
 
 // NewMongoDBStorage создает новое MongoDB хранилище
-func NewMongoDBStorage() (EntityStorage, error) {
-	// Загружаем конфигурацию
-	cfg := config.LoadConfig()
-
-	// Создаем MongoDB клиент
-	client, err := mongodb.NewClient(&cfg.MongoDB)
-	if err != nil {
-		return nil, err
+func NewMongoDBStorage(client *mongodb.Client) (EntityStorage, error) {
+	if client == nil {
+		return nil, fmt.Errorf("MongoDB client is nil")
 	}
 
 	storage := &MongoDBStorage{

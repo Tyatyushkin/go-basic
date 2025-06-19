@@ -6,6 +6,9 @@ import (
 	"os"
 	"strings"
 	"time"
+
+	"mpm/config"
+	"mpm/internal/storage/mongodb"
 )
 
 // Константы для типов хранилищ
@@ -46,7 +49,16 @@ func CreateStorage(storageType, dataDir string, saveInterval time.Duration) (Ent
 
 	case StorageTypeMongoDB:
 		log.Printf("Используется MongoDB-хранилище")
-		return NewMongoDBStorage()
+		// Загружаем конфигурацию
+		cfg := config.LoadConfig()
+
+		// Создаем MongoDB клиент
+		client, err := mongodb.NewClient(&cfg.MongoDB)
+		if err != nil {
+			return nil, fmt.Errorf("не удалось создать MongoDB клиент: %w", err)
+		}
+
+		return NewMongoDBStorage(client)
 
 	default:
 		return nil, fmt.Errorf("неизвестный тип хранилища: %s", storageType)
