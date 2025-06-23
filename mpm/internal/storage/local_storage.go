@@ -2,7 +2,6 @@ package storage
 
 import (
 	"io"
-	"io/ioutil"
 	"mime/multipart"
 	"os"
 	"path/filepath"
@@ -17,7 +16,7 @@ type LocalStorage struct {
 func NewLocalStorage(basePath, baseURL string) *LocalStorage {
 	// Создаем директорию, если не существует
 	if _, err := os.Stat(basePath); os.IsNotExist(err) {
-		os.MkdirAll(basePath, 0755)
+		_ = os.MkdirAll(basePath, 0755)
 	}
 
 	return &LocalStorage{
@@ -55,7 +54,7 @@ func (ls *LocalStorage) Save(file multipart.File, filename string) (string, erro
 }
 
 func (ls *LocalStorage) Get(path string) ([]byte, error) {
-	return ioutil.ReadFile(filepath.Join(ls.BasePath, path))
+	return os.ReadFile(filepath.Join(ls.BasePath, path))
 }
 
 func (ls *LocalStorage) GetReader(path string) (io.ReadCloser, error) {

@@ -3,9 +3,17 @@ package main
 import (
 	"context"
 	"errors"
+	"log"
+	"net"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
 	httpSwagger "github.com/swaggo/http-swagger"
 	"google.golang.org/grpc"
-	"log"
+
 	_ "mpm/docs"
 	grpcserver "mpm/internal/grpc"
 	"mpm/internal/handlers"
@@ -14,12 +22,6 @@ import (
 	"mpm/internal/storage"
 	"mpm/middleware"
 	pb "mpm/proto/albums"
-	"net"
-	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
 )
 
 // @title MPM API

@@ -6,12 +6,16 @@ import (
 	"os"
 	"strings"
 	"time"
+
+	"mpm/config"
+	"mpm/internal/storage/mongodb"
 )
 
 // Константы для типов хранилищ
 const (
 	StorageTypeJSON     = "json"
 	StorageTypePostgres = "postgres"
+	StorageTypeMongoDB  = "mongodb"
 	// В будущем можно добавить другие типы: redis, mysql и т.д.
 )
 
@@ -42,6 +46,19 @@ func CreateStorage(storageType, dataDir string, saveInterval time.Duration) (Ent
 		log.Printf("Используется PostgreSQL-хранилище с подключением: %s", connStr)
 		// Здесь будет вызов конструктора PostgreSQL-хранилища когда оно будет реализовано
 		return nil, fmt.Errorf("хранилище типа %s пока не реализовано", storageType)
+
+	case StorageTypeMongoDB:
+		log.Printf("Используется MongoDB-хранилище")
+		// Загружаем конфигурацию
+		cfg := config.LoadConfig()
+
+		// Создаем MongoDB клиент
+		client, err := mongodb.NewClient(&cfg.MongoDB)
+		if err != nil {
+			return nil, fmt.Errorf("не удалось создать MongoDB клиент: %w", err)
+		}
+
+		return NewMongoDBStorage(client)
 
 	default:
 		return nil, fmt.Errorf("неизвестный тип хранилища: %s", storageType)
