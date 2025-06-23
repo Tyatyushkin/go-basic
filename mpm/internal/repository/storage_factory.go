@@ -9,6 +9,7 @@ import (
 
 	"mpm/config"
 	"mpm/internal/storage/mongodb"
+	"mpm/internal/storage/postgres"
 )
 
 // Константы для типов хранилищ
@@ -37,15 +38,17 @@ func CreateStorage(storageType, dataDir string, saveInterval time.Duration) (Ent
 		return NewJSONStorage(dataDir, saveInterval), nil
 
 	case StorageTypePostgres:
-		// Получаем строку подключения к PostgreSQL
-		connStr := os.Getenv("MPM_DATABASE_URL")
-		if connStr == "" {
-			return nil, fmt.Errorf("не указана строка подключения к PostgreSQL (MPM_DATABASE_URL)")
+		log.Printf("Используется PostgreSQL-хранилище")
+		// Загружаем конфигурацию
+		cfg := config.LoadConfig()
+
+		// Создаем PostgreSQL клиент
+		client, err := postgres.NewClient(&cfg.Postgres)
+		if err != nil {
+			return nil, fmt.Errorf("не удалось создать PostgreSQL клиент: %w", err)
 		}
 
-		log.Printf("Используется PostgreSQL-хранилище с подключением: %s", connStr)
-		// Здесь будет вызов конструктора PostgreSQL-хранилища когда оно будет реализовано
-		return nil, fmt.Errorf("хранилище типа %s пока не реализовано", storageType)
+		return NewPostgresStorage(client)
 
 	case StorageTypeMongoDB:
 		log.Printf("Используется MongoDB-хранилище")

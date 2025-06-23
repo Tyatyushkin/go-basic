@@ -70,7 +70,15 @@ func (r *Repository) GetAllPhotos() []models.Photo {
 		return jsonStorage.GetPhotos()
 	}
 
-	// В будущем здесь будут проверки других типов хранилищ
+	if postgresStorage, ok := r.storage.(*PostgresStorage); ok {
+		return postgresStorage.photos
+	}
+
+	if mongoStorage, ok := r.storage.(*MongoDBStorage); ok {
+		// TODO: Реализовать получение фотографий из MongoDB
+		return []models.Photo{}
+	}
+
 	return []models.Photo{}
 }
 
@@ -89,6 +97,10 @@ func (r *Repository) GetAllAlbums(ctx context.Context) ([]models.Album, error) {
 	// Получаем альбомы из хранилища
 	if jsonStorage, ok := r.storage.(*JSONStorage); ok {
 		allAlbums = jsonStorage.GetAlbums()
+	} else if postgresStorage, ok := r.storage.(*PostgresStorage); ok {
+		return postgresStorage.albums, nil
+	} else if mongoStorage, ok := r.storage.(*MongoDBStorage); ok {
+		return mongoStorage.albums, nil
 	} else {
 		return []models.Album{}, nil
 	}
@@ -186,7 +198,14 @@ func (r *Repository) GetAllTags() []models.Tag {
 		return jsonStorage.GetTags()
 	}
 
-	// В будущем здесь будут проверки других типов хранилищ
+	if postgresStorage, ok := r.storage.(*PostgresStorage); ok {
+		return postgresStorage.tags
+	}
+
+	if mongoStorage, ok := r.storage.(*MongoDBStorage); ok {
+		return mongoStorage.tags
+	}
+
 	return []models.Tag{}
 }
 
@@ -268,32 +287,37 @@ func (r *Repository) AddAlbum(ctx context.Context, album models.Album) (int, err
 		// Продолжаем выполнение
 	}
 
-	albums, err := r.GetAllAlbums(ctx)
-	if err != nil {
-		return 0, err
-	}
-
-	// Находим максимальный ID
-	maxID := 0
-	for _, a := range albums {
-		if a.ID > maxID {
-			maxID = a.ID
-		}
-	}
-
-	// Всегда генерируем новый ID, даже если в запросе был указан ID
-	album.ID = maxID + 1
-
 	// Устанавливаем дату создания
 	if album.CreatedAt.IsZero() {
 		album.CreatedAt = time.Now()
 	}
 
-	// Добавляем альбом к существующим
-	albums = append(albums, album)
+	// Сохраняем через EntityStorage интерфейс
+	if err := r.storage.Save(&album); err != nil {
+		return 0, err
+	}
 
-	// Сохраняем обновленные данные
+	// Для JSON хранилища нужна дополнительная логика
 	if jsonStorage, ok := r.storage.(*JSONStorage); ok {
+		albums, err := r.GetAllAlbums(ctx)
+		if err != nil {
+			return 0, err
+		}
+
+		// Находим максимальный ID
+		maxID := 0
+		for _, a := range albums {
+			if a.ID > maxID {
+				maxID = a.ID
+			}
+		}
+
+		// Всегда генерируем новый ID, даже если в запросе был указан ID
+		album.ID = maxID + 1
+
+		// Добавляем альбом к существующим
+		albums = append(albums, album)
+
 		jsonStorage.albums = albums
 		jsonStorage.albumsModified = true
 		jsonStorage.dirtyFlag = true

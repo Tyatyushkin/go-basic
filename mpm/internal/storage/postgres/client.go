@@ -59,6 +59,11 @@ func NewClient(cfg *config.PostgresConfig) (*Client, error) {
 		config: cfg,
 	}
 
+	// Запуск миграций
+	if err := client.Migrate(); err != nil {
+		return nil, fmt.Errorf("failed to run migrations: %w", err)
+	}
+
 	return client, nil
 }
 
