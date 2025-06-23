@@ -13,9 +13,10 @@ type Config struct {
 	JWT        JWTConfig
 
 	// Storage configuration
-	StorageType  string // "json" or "mongodb"
+	StorageType  string // "json", "mongodb", or "postgres"
 	JSONDataPath string
 	MongoDB      MongoDBConfig
+	Postgres     PostgresConfig
 }
 
 type JWTConfig struct {
@@ -54,6 +55,27 @@ type CollectionNames struct {
 	Photos   string
 	Tags     string
 	Comments string
+}
+
+type PostgresConfig struct {
+	// Connection settings
+	Host     string
+	Port     string
+	Username string
+	Password string
+	Database string
+	SSLMode  string
+
+	// Connection pool settings
+	MaxOpenConns    int
+	MaxIdleConns    int
+	ConnMaxLifetime time.Duration
+	ConnMaxIdleTime time.Duration
+
+	// Additional settings
+	Schema         string
+	MigrationsPath string
+	EnableQueryLog bool
 }
 
 // LoadConfig loads configuration from environment variables
@@ -100,6 +122,27 @@ func LoadConfig() *Config {
 			EnableTransactions:  getEnvBoolOrDefault("MONGO_ENABLE_TRANSACTIONS", true),
 			EnableChangeStreams: getEnvBoolOrDefault("MONGO_ENABLE_CHANGE_STREAMS", false),
 		},
+
+		// PostgreSQL configuration
+		Postgres: PostgresConfig{
+			Host:     getEnvOrDefault("POSTGRES_HOST", "localhost"),
+			Port:     getEnvOrDefault("POSTGRES_PORT", "5432"),
+			Username: getEnvOrDefault("POSTGRES_USER", "mpm_user"),
+			Password: getEnvOrDefault("POSTGRES_PASSWORD", "mpm_password"),
+			Database: getEnvOrDefault("POSTGRES_DATABASE", "mpm_db"),
+			SSLMode:  getEnvOrDefault("POSTGRES_SSLMODE", "disable"),
+
+			// Connection pool settings
+			MaxOpenConns:    getEnvIntOrDefault("POSTGRES_MAX_OPEN_CONNS", 25),
+			MaxIdleConns:    getEnvIntOrDefault("POSTGRES_MAX_IDLE_CONNS", 5),
+			ConnMaxLifetime: getEnvDurationOrDefault("POSTGRES_CONN_MAX_LIFETIME", 5*time.Minute),
+			ConnMaxIdleTime: getEnvDurationOrDefault("POSTGRES_CONN_MAX_IDLE_TIME", 90*time.Second),
+
+			// Additional settings
+			Schema:         getEnvOrDefault("POSTGRES_SCHEMA", "public"),
+			MigrationsPath: getEnvOrDefault("POSTGRES_MIGRATIONS_PATH", "internal/storage/postgres/migrations"),
+			EnableQueryLog: getEnvBoolOrDefault("POSTGRES_ENABLE_QUERY_LOG", false),
+		},
 	}
 
 	// If MongoDB URI is not provided, construct it from individual settings
@@ -140,6 +183,15 @@ func getEnvBoolOrDefault(key string, defaultValue bool) bool {
 func getEnvDurationOrDefault(key string, defaultValue time.Duration) time.Duration {
 	if value := os.Getenv(key); value != "" {
 		if parsed, err := time.ParseDuration(value); err == nil {
+			return parsed
+		}
+	}
+	return defaultValue
+}
+
+func getEnvIntOrDefault(key string, defaultValue int) int {
+	if value := os.Getenv(key); value != "" {
+		if parsed, err := strconv.Atoi(value); err == nil {
 			return parsed
 		}
 	}

@@ -6,28 +6,46 @@ services:
       - /opt/mpm/data:/opt/mpm/data
     ports:
       - "8484:8484"
+      - "50051:50051"  # gRPC port
     restart: unless-stopped
     environment:
       - TZ=UTC
-      - MONGODB_HOST=${MONGODB_HOST:-mongodb}
-      - MONGODB_PORT=${MONGODB_PORT:-27017}
-      - MONGO_DATABASE=${MONGO_DATABASE:-mpm_db}
+      - MPM_STORAGE_TYPE=${MPM_STORAGE_TYPE:-postgres}
+      
+      # PostgreSQL configuration
+      - POSTGRES_HOST=${POSTGRES_HOST:-postgres}
+      - POSTGRES_PORT=${POSTGRES_PORT:-5432}
+      - POSTGRES_USER=${POSTGRES_USER:-mpm_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-mpm_password}
+      - POSTGRES_DATABASE=${POSTGRES_DATABASE:-mpm_db}
+      - POSTGRES_SSLMODE=${POSTGRES_SSLMODE:-disable}
+      
+      # JWT configuration
+      - JWT_SECRET=${JWT_SECRET:-your-secret-key-change-me}
     depends_on:
-      - mongodb
+      postgres:
+        condition: service_healthy
 
-  mongodb:
-    image: mongo:7.0
-    container_name: mpm_mongodb
+  postgres:
+    image: postgres:16-alpine
+    container_name: mpm_postgres
     restart: unless-stopped
     environment:
-      - MONGO_INITDB_ROOT_USERNAME=${MONGO_ROOT_USERNAME:-root}
-      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_ROOT_PASSWORD:-changeMe123}
-      - MONGO_INITDB_DATABASE=${MONGO_DATABASE:-mpm_db}
+      - POSTGRES_USER=${POSTGRES_USER:-mpm_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-mpm_password}
+      - POSTGRES_DB=${POSTGRES_DATABASE:-mpm_db}
+      - PGDATA=/var/lib/postgresql/data/pgdata
     ports:
-      - "${MONGODB_PORT:-27017}:27017"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
-      - /opt/mpm/mongo:/data/db
+      - postgres_data:/var/lib/postgresql/data
+      - ./internal/storage/postgres/migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-mpm_user} -d ${POSTGRES_DATABASE:-mpm_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
 volumes:
-  mpm-data:
-  # Named volume for persistent data storage
+  postgres_data:
